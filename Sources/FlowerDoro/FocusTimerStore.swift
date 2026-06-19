@@ -39,6 +39,14 @@ public final class FocusTimerStore: ObservableObject {
         return 1 - (Double(remainingSeconds) / Double(totalSeconds))
     }
 
+    public var isRunningFocus: Bool {
+        isRunning && phase == .work
+    }
+
+    public var isRunningBreak: Bool {
+        isRunning && phase == .break
+    }
+
     public var remainingTimeText: String {
         let minutes = remainingSeconds / 60
         let seconds = remainingSeconds % 60
