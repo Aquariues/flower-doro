@@ -6,7 +6,15 @@ public struct FlowerDoroRootView: View {
     @State private var isSettingsPresented = false
     @State private var isHovering = false
 
-    public init() {}
+    @MainActor
+    public init() {
+        _timer = StateObject(wrappedValue: FocusTimerStore())
+    }
+
+    @MainActor
+    public init(timer: FocusTimerStore) {
+        _timer = StateObject(wrappedValue: timer)
+    }
 
     public var body: some View {
         compactTimer
@@ -247,6 +255,106 @@ public struct FlowerDoroRootView: View {
         }
         .padding()
         .frame(width: 330)
+    }
+}
+
+public struct FlowerDoroDashboardView: View {
+    @ObservedObject private var timer: FocusTimerStore
+
+    public init(timer: FocusTimerStore) {
+        self.timer = timer
+    }
+
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Flower-doro")
+                            .font(.title2.weight(.bold))
+
+                        Text(timer.phase.title)
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(timer.phase.tint)
+                    }
+
+                    Spacer()
+
+                    Text(timer.remainingTimeText)
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(timer.phase.tint)
+                        .monospacedDigit()
+                }
+
+                ProgressView(value: timer.progress)
+                    .tint(timer.phase.tint)
+
+                HStack(spacing: 10) {
+                    Button(timer.isRunning ? "Pause" : "Start") {
+                        timer.toggleRunning()
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Reset") {
+                        timer.reset()
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Session")
+                        .font(.headline)
+
+                    HStack {
+                        Text("Work")
+                        Spacer()
+                        MinuteField(value: $timer.workMinutes, range: 1...120)
+                    }
+
+                    HStack {
+                        Text("Break")
+                        Spacer()
+                        MinuteField(value: $timer.breakMinutes, range: 1...60)
+                    }
+                }
+                .disabled(timer.isRunning)
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text(timer.gardenTitle)
+                            .font(.headline)
+
+                        Spacer()
+
+                        Text("\(timer.garden.flowers.count) flowers")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+
+                    if timer.garden.flowers.isEmpty {
+                        Text("Finish a focus session to grow your first flower.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 14)
+                    } else {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 12)], spacing: 12) {
+                            ForEach(timer.garden.flowers) { flower in
+                                FlowerTile(flower: flower)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+        .frame(width: 360, height: 500)
+        .background(.regularMaterial)
     }
 }
 
