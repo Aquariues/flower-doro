@@ -52,18 +52,6 @@ public struct Flower: Identifiable, Equatable {
     }
 }
 
-public struct PendingFlowerClaim: Identifiable, Equatable {
-    public let id: UUID
-    public let completedAt: Date
-    public let focusMinutes: Int
-
-    public init(id: UUID = UUID(), completedAt: Date = Date(), focusMinutes: Int) {
-        self.id = id
-        self.completedAt = completedAt
-        self.focusMinutes = focusMinutes
-    }
-}
-
 public struct UserGarden: Identifiable, Equatable {
     public let id: UUID
     public var userName: String

@@ -3,7 +3,7 @@ import XCTest
 
 @MainActor
 final class FocusTimerStoreTests: XCTestCase {
-    func testWorkCompletionEarnsFlowerAndStartsBreak() {
+    func testWorkCompletionAutoAddsFlowerAndStartsBreak() {
         let store = FocusTimerStore(workMinutes: 1, breakMinutes: 5)
 
         store.start()
@@ -12,23 +12,19 @@ final class FocusTimerStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(store.phase, .break)
-        XCTAssertNotNil(store.pendingClaim)
-        XCTAssertEqual(store.flowers.count, 0)
+        XCTAssertEqual(store.flowers.count, 1)
+        XCTAssertEqual(store.latestFlower, store.flowers.first)
+        XCTAssertEqual(store.flowers.first?.focusMinutes, 1)
         XCTAssertEqual(store.remainingSeconds, 5 * 60)
     }
 
-    func testClaimFlowerAddsSelectedFlowerToUserGarden() {
+    func testAddFlowerUsesSelectedKind() {
         let store = FocusTimerStore(workMinutes: 1, breakMinutes: 5)
 
-        store.start()
-        for _ in 0..<60 {
-            store.tick()
-        }
+        let flower = store.addFlower(kind: .rose)
 
-        let flower = store.claimFlower(kind: .rose)
-
-        XCTAssertEqual(flower?.kind, .rose)
-        XCTAssertNil(store.pendingClaim)
+        XCTAssertEqual(flower.kind, .rose)
+        XCTAssertEqual(store.latestFlower, flower)
         XCTAssertEqual(store.garden.flowers.count, 1)
         XCTAssertEqual(store.garden.flowers.first?.focusMinutes, 1)
     }
