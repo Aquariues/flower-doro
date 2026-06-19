@@ -1,0 +1,38 @@
+name: Branch Policy
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  validate-branch-flow:
+    name: Validate branch flow
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check pull request branches
+        env:
+          BASE_BRANCH: ${{ github.base_ref }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ "$BASE_BRANCH" == "main" ]]; then
+            if [[ "$HEAD_BRANCH" != "develop" ]]; then
+              echo "Only develop may be merged into main."
+              exit 1
+            fi
+            exit 0
+          fi
+
+          if [[ "$BASE_BRANCH" == "develop" ]]; then
+            if [[ "$HEAD_BRANCH" =~ ^(feature|fix|chore)/.+$ ]]; then
+              exit 0
+            fi
+
+            echo "Branches targeting develop must start with feature/, fix/, or chore/."
+            exit 1
+          fi
+
+          echo "Unexpected base branch: $BASE_BRANCH"
+          exit 1

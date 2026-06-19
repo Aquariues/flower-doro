@@ -12,6 +12,10 @@ let package = Package(
         .library(
             name: "FlowerDoro",
             targets: ["FlowerDoro"]
+        ),
+        .executable(
+            name: "FlowerDoroMac",
+            targets: ["FlowerDoroMac"]
         )
     ],
     targets: [
@@ -20,6 +24,10 @@ let package = Package(
             resources: [
                 .process("Resources")
             ]
+        ),
+        .executableTarget(
+            name: "FlowerDoroMac",
+            dependencies: ["FlowerDoro"]
         ),
         .testTarget(
             name: "FlowerDoroTests",
