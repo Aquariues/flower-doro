@@ -14,7 +14,7 @@ public final class FocusTimerStore: ObservableObject {
     @Published public private(set) var remainingSeconds: Int
     @Published public private(set) var isRunning: Bool
     @Published public private(set) var garden: UserGarden
-    @Published public private(set) var pendingClaim: PendingFlowerClaim?
+    @Published public private(set) var latestFlower: Flower?
 
     private var totalSeconds: Int
     private var ticker: Timer?
@@ -27,7 +27,7 @@ public final class FocusTimerStore: ObservableObject {
         self.totalSeconds = workMinutes * 60
         self.isRunning = false
         self.garden = garden
-        self.pendingClaim = nil
+        self.latestFlower = garden.flowers.first
     }
 
     deinit {
@@ -92,23 +92,17 @@ public final class FocusTimerStore: ObservableObject {
     }
 
     @discardableResult
-    public func claimFlower(kind: FlowerKind = .random()) -> Flower? {
-        guard let pendingClaim else { return nil }
-
-        let flower = Flower(
-            kind: kind,
-            earnedAt: pendingClaim.completedAt,
-            focusMinutes: pendingClaim.focusMinutes
-        )
+    public func addFlower(kind: FlowerKind = .random(), earnedAt: Date = Date()) -> Flower {
+        let flower = Flower(kind: kind, earnedAt: earnedAt, focusMinutes: workMinutes)
         garden.flowers.insert(flower, at: 0)
-        self.pendingClaim = nil
+        latestFlower = flower
         return flower
     }
 
     private func completeCurrentPhase() {
         switch phase {
         case .work:
-            pendingClaim = PendingFlowerClaim(focusMinutes: workMinutes)
+            addFlower()
             phase = .break
             totalSeconds = breakMinutes * 60
             remainingSeconds = totalSeconds
