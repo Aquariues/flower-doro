@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create GitHub release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build package
+        run: swift build
+
+      - name: Build macOS app product
+        run: swift build --product FlowerDoroMac
+
+      - name: Run tests
+        run: swift test
+
+      - name: Create release tag
+        id: tag
+        run: |
+          tag="v$(date -u +'%Y.%m.%d').${GITHUB_RUN_NUMBER}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Build release archive
+        run: |
+          swift build --configuration release --product FlowerDoroMac
+          bin_path="$(swift build --configuration release --show-bin-path)"
+          mkdir -p dist
+          cp "$bin_path/FlowerDoroMac" dist/FlowerDoroMac
+          cp -R "$bin_path/FlowerDoro_FlowerDoro.bundle" dist/FlowerDoro_FlowerDoro.bundle
+          ditto -c -k --keepParent dist FlowerDoroMac-${{ steps.tag.outputs.tag }}.zip
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          gh release create "$TAG" \
+            "FlowerDoroMac-${TAG}.zip" \
+            --target "$GITHUB_SHA" \
+            --title "Flower-doro ${TAG}" \
+            --generate-notes
