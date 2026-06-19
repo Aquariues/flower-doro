@@ -396,9 +396,13 @@ private struct WindowTransparencyConfigurator: NSViewRepresentable {
             guard let window = view.window else { return }
             window.isOpaque = false
             window.backgroundColor = .clear
-            window.styleMask.insert(.fullSizeContentView)
+            window.styleMask = [.borderless, .resizable, .fullSizeContentView]
+            window.hasShadow = false
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
+            window.standardWindowButton(.closeButton)?.isHidden = true
+            window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+            window.standardWindowButton(.zoomButton)?.isHidden = true
             window.toolbarStyle = .unifiedCompact
             window.isMovableByWindowBackground = true
             window.level = .floating
