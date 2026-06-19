@@ -6,8 +6,8 @@ struct FlowerDoroMacApp: App {
     var body: some Scene {
         WindowGroup {
             FlowerDoroRootView()
-                .frame(minWidth: 176, idealWidth: 290, maxWidth: 380)
-                .frame(minHeight: 74, idealHeight: 174, maxHeight: 420)
+                .frame(minWidth: 188, idealWidth: 232, maxWidth: 380)
+                .frame(minHeight: 62, idealHeight: 74, maxHeight: 420)
         }
         .windowResizability(.contentSize)
     }
