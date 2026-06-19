@@ -6,8 +6,10 @@ The first idea:
 
 - Set a work countdown and break countdown, for example 30 minutes work and 5 minutes break.
 - Finish a work session.
-- Earn a flower.
+- Claim a random flower.
 - Grow a small garden from completed focus sessions.
+
+The first flower set includes Daisy, Rose, and Sunflower reward assets.
 
 ## Project Shape
 

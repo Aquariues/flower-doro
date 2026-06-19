@@ -49,6 +49,10 @@ public final class FocusTimerStore: ObservableObject {
         garden.flowers
     }
 
+    public var gardenTitle: String {
+        garden.userName == "You" ? "Your Garden" : "\(garden.userName)'s Garden"
+    }
+
     public func toggleRunning() {
         isRunning ? pause() : start()
     }

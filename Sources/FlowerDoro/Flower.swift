@@ -2,10 +2,8 @@ import Foundation
 
 public enum FlowerKind: String, CaseIterable, Identifiable, Equatable {
     case daisy
-    case tulip
     case rose
     case sunflower
-    case lavender
 
     public var id: String { rawValue }
 
@@ -13,29 +11,25 @@ public enum FlowerKind: String, CaseIterable, Identifiable, Equatable {
         switch self {
         case .daisy:
             "Daisy"
-        case .tulip:
-            "Tulip"
         case .rose:
             "Rose"
         case .sunflower:
             "Sunflower"
-        case .lavender:
-            "Lavender"
         }
+    }
+
+    public var assetName: String {
+        rawValue
     }
 
     public var symbolName: String {
         switch self {
         case .daisy:
             "camera.macro"
-        case .tulip:
-            "leaf"
         case .rose:
             "seal"
         case .sunflower:
             "sun.max"
-        case .lavender:
-            "wand.and.stars"
         }
     }
 

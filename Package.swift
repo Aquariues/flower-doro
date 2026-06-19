@@ -15,7 +15,12 @@ let package = Package(
         )
     ],
     targets: [
-        .target(name: "FlowerDoro"),
+        .target(
+            name: "FlowerDoro",
+            resources: [
+                .process("Resources")
+            ]
+        ),
         .testTarget(
             name: "FlowerDoroTests",
             dependencies: ["FlowerDoro"]

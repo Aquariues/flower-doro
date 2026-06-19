@@ -71,7 +71,7 @@ public struct FlowerDoroRootView: View {
     private var garden: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("\(timer.garden.userName)'s Garden")
+                Text(timer.gardenTitle)
                     .font(.headline)
 
                 Spacer()
@@ -126,9 +126,8 @@ private struct FlowerTile: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: flower.kind.symbolName)
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(flower.kind.tint)
+            FlowerAssetImage(kind: flower.kind)
+                .frame(width: 46, height: 46)
 
             Text(flower.kind.displayName)
                 .font(.caption2)
@@ -145,6 +144,62 @@ private struct FlowerTile: View {
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityLabel("\(flower.kind.displayName) earned from \(flower.focusMinutes) minutes of focus")
     }
+}
+
+private struct FlowerAssetImage: View {
+    let kind: FlowerKind
+
+    var body: some View {
+        #if os(macOS)
+        if let image = Self.image(kind: kind) {
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFit()
+        } else {
+            fallback
+        }
+        #else
+        if let image = Self.image(kind: kind) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+        } else {
+            fallback
+        }
+        #endif
+    }
+
+    private var fallback: some View {
+        Image(systemName: kind.symbolName)
+            .font(.system(size: 28, weight: .semibold))
+            .foregroundStyle(kind.tint)
+    }
+
+    #if os(macOS)
+    private static func image(kind: FlowerKind) -> NSImage? {
+        guard let url = Bundle.module.url(
+            forResource: kind.assetName,
+            withExtension: "png",
+            subdirectory: "Flowers"
+        ) else {
+            return nil
+        }
+
+        return NSImage(contentsOf: url)
+    }
+    #else
+    private static func image(kind: FlowerKind) -> UIImage? {
+        guard let url = Bundle.module.url(
+            forResource: kind.assetName,
+            withExtension: "png",
+            subdirectory: "Flowers"
+        ) else {
+            return nil
+        }
+
+        return UIImage(contentsOfFile: url.path)
+    }
+    #endif
 }
 
 #if os(macOS)
@@ -182,14 +237,10 @@ private extension FlowerKind {
         switch self {
         case .daisy:
             .yellow
-        case .tulip:
-            .pink
         case .rose:
             .red
         case .sunflower:
             .orange
-        case .lavender:
-            .purple
         }
     }
 }
