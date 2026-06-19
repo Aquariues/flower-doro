@@ -11,8 +11,8 @@ public struct FlowerDoroRootView: View {
     public var body: some View {
         compactTimer
             .padding(timer.isRunning ? 8 : 14)
-            .frame(minWidth: timer.isRunning ? 176 : 240, idealWidth: timer.isRunning ? 210 : 290, maxWidth: 380)
-            .frame(minHeight: timer.isRunning ? 74 : 146, idealHeight: timer.isRunning ? 92 : 174, maxHeight: 460)
+            .frame(minWidth: timer.isRunning ? 188 : 240, idealWidth: timer.isRunning ? 232 : 290, maxWidth: 380)
+            .frame(minHeight: timer.isRunning ? 62 : 146, idealHeight: timer.isRunning ? 74 : 174, maxHeight: 460)
             .background {
                 if timer.isRunning {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
@@ -42,33 +42,32 @@ public struct FlowerDoroRootView: View {
     }
 
     private var runningTimer: some View {
-        ZStack {
+        HStack(alignment: .center, spacing: 8) {
+            Text(timer.remainingTimeText)
+                .font(.system(size: 35, weight: .bold, design: .rounded))
+                .foregroundStyle(timer.phase.tint)
+                .monospacedDigit()
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+
             if timer.isRunningFocus {
                 BloomingFlowerView(progress: timer.progress, tint: timer.phase.tint)
-                    .frame(width: 54, height: 54)
-                    .opacity(0.72)
+                    .frame(width: 30, height: 30)
+                    .opacity(0.82)
                     .accessibilityLabel("Hoa dang no")
             }
 
-            HStack(spacing: 8) {
-                Text(timer.remainingTimeText)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(timer.phase.tint)
-                    .monospacedDigit()
-                    .minimumScaleFactor(0.7)
-                    .lineLimit(1)
-
-                Button {
-                    isGardenPresented.toggle()
-                } label: {
-                    compactFlowerBadge
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
-                    gardenPanel
-                }
-                .opacity(isHovering || !timer.garden.flowers.isEmpty ? 1 : 0.42)
+            Button {
+                isGardenPresented.toggle()
+            } label: {
+                compactFlowerBadge
             }
+            .buttonStyle(.plain)
+            .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
+                gardenPanel
+            }
+            .opacity(isHovering || !timer.garden.flowers.isEmpty ? 1 : 0.36)
         }
         .contentShape(Rectangle())
         .onTapGesture {
@@ -397,8 +396,10 @@ private struct WindowTransparencyConfigurator: NSViewRepresentable {
             guard let window = view.window else { return }
             window.isOpaque = false
             window.backgroundColor = .clear
+            window.styleMask.insert(.fullSizeContentView)
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
+            window.toolbarStyle = .unifiedCompact
             window.isMovableByWindowBackground = true
             window.level = .floating
             window.collectionBehavior.insert(.canJoinAllSpaces)
