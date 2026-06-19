@@ -13,19 +13,21 @@ public final class FocusTimerStore: ObservableObject {
     @Published public private(set) var phase: FocusPhase
     @Published public private(set) var remainingSeconds: Int
     @Published public private(set) var isRunning: Bool
-    @Published public private(set) var flowers: [Flower]
+    @Published public private(set) var garden: UserGarden
+    @Published public private(set) var pendingClaim: PendingFlowerClaim?
 
     private var totalSeconds: Int
     private var ticker: Timer?
 
-    public init(workMinutes: Int = 30, breakMinutes: Int = 5, flowers: [Flower] = []) {
+    public init(workMinutes: Int = 30, breakMinutes: Int = 5, garden: UserGarden = UserGarden()) {
         self.workMinutes = workMinutes
         self.breakMinutes = breakMinutes
         self.phase = .work
         self.remainingSeconds = workMinutes * 60
         self.totalSeconds = workMinutes * 60
         self.isRunning = false
-        self.flowers = flowers
+        self.garden = garden
+        self.pendingClaim = nil
     }
 
     deinit {
@@ -41,6 +43,10 @@ public final class FocusTimerStore: ObservableObject {
         let minutes = remainingSeconds / 60
         let seconds = remainingSeconds % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    public var flowers: [Flower] {
+        garden.flowers
     }
 
     public func toggleRunning() {
@@ -81,10 +87,24 @@ public final class FocusTimerStore: ObservableObject {
         completeCurrentPhase()
     }
 
+    @discardableResult
+    public func claimFlower(kind: FlowerKind = .random()) -> Flower? {
+        guard let pendingClaim else { return nil }
+
+        let flower = Flower(
+            kind: kind,
+            earnedAt: pendingClaim.completedAt,
+            focusMinutes: pendingClaim.focusMinutes
+        )
+        garden.flowers.insert(flower, at: 0)
+        self.pendingClaim = nil
+        return flower
+    }
+
     private func completeCurrentPhase() {
         switch phase {
         case .work:
-            flowers.insert(Flower(focusMinutes: workMinutes), at: 0)
+            pendingClaim = PendingFlowerClaim(focusMinutes: workMinutes)
             phase = .break
             totalSeconds = breakMinutes * 60
             remainingSeconds = totalSeconds

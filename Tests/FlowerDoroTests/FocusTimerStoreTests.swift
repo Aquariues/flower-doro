@@ -12,9 +12,25 @@ final class FocusTimerStoreTests: XCTestCase {
         }
 
         XCTAssertEqual(store.phase, .break)
-        XCTAssertEqual(store.flowers.count, 1)
-        XCTAssertEqual(store.flowers.first?.focusMinutes, 1)
+        XCTAssertNotNil(store.pendingClaim)
+        XCTAssertEqual(store.flowers.count, 0)
         XCTAssertEqual(store.remainingSeconds, 5 * 60)
+    }
+
+    func testClaimFlowerAddsSelectedFlowerToUserGarden() {
+        let store = FocusTimerStore(workMinutes: 1, breakMinutes: 5)
+
+        store.start()
+        for _ in 0..<60 {
+            store.tick()
+        }
+
+        let flower = store.claimFlower(kind: .rose)
+
+        XCTAssertEqual(flower?.kind, .rose)
+        XCTAssertNil(store.pendingClaim)
+        XCTAssertEqual(store.garden.flowers.count, 1)
+        XCTAssertEqual(store.garden.flowers.first?.focusMinutes, 1)
     }
 
     func testResetReturnsToConfiguredWorkSession() {

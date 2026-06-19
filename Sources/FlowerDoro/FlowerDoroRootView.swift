@@ -11,6 +11,7 @@ public struct FlowerDoroRootView: View {
                 VStack(spacing: 24) {
                     timerCard
                     settingsCard
+                    claimCard
                     garden
                 }
                 .padding()
@@ -70,23 +71,23 @@ public struct FlowerDoroRootView: View {
     private var garden: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Garden")
+                Text("\(timer.garden.userName)'s Garden")
                     .font(.headline)
 
                 Spacer()
 
-                Text("\(timer.flowers.count) flowers")
+                Text("\(timer.garden.flowers.count) flowers")
                     .foregroundStyle(.secondary)
             }
 
-            if timer.flowers.isEmpty {
+            if timer.garden.flowers.isEmpty {
                 Text("Finish a focus session to grow your first flower.")
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 24)
             } else {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 12)], spacing: 12) {
-                    ForEach(timer.flowers) { flower in
+                    ForEach(timer.garden.flowers) { flower in
                         FlowerTile(flower: flower)
                     }
                 }
@@ -96,6 +97,28 @@ public struct FlowerDoroRootView: View {
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
+
+    @ViewBuilder
+    private var claimCard: some View {
+        if let pendingClaim = timer.pendingClaim {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Flower Ready")
+                    .font(.headline)
+
+                Text("You finished \(pendingClaim.focusMinutes) minutes of focus. Claim a random flower for your garden.")
+                    .foregroundStyle(.secondary)
+
+                Button("Claim Random Flower") {
+                    timer.claimFlower()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+    }
 }
 
 private struct FlowerTile: View {
@@ -103,19 +126,24 @@ private struct FlowerTile: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Text("flower")
-                .font(.system(size: 30))
-                .accessibilityHidden(true)
+            Image(systemName: flower.kind.symbolName)
+                .font(.system(size: 28, weight: .semibold))
+                .foregroundStyle(flower.kind.tint)
+
+            Text(flower.kind.displayName)
+                .font(.caption2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
             Text("\(flower.focusMinutes)m")
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
         }
-        .frame(width: 64, height: 72)
+        .frame(width: 76, height: 86)
         .background(.thinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityLabel("Flower earned from \(flower.focusMinutes) minutes of focus")
+        .accessibilityLabel("\(flower.kind.displayName) earned from \(flower.focusMinutes) minutes of focus")
     }
 }
 
@@ -145,6 +173,23 @@ private extension FocusPhase {
             .green
         case .break:
             .mint
+        }
+    }
+}
+
+private extension FlowerKind {
+    var tint: Color {
+        switch self {
+        case .daisy:
+            .yellow
+        case .tulip:
+            .pink
+        case .rose:
+            .red
+        case .sunflower:
+            .orange
+        case .lavender:
+            .purple
         }
     }
 }
