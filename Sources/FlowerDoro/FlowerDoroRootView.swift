@@ -863,11 +863,7 @@ private struct FlowerAssetImage: View {
 
     #if os(macOS)
     private static func image(kind: FlowerKind) -> NSImage? {
-        guard let url = Bundle.module.url(
-            forResource: kind.assetName,
-            withExtension: "png",
-            subdirectory: "Flowers"
-        ) else {
+        guard let url = imageURL(kind: kind) else {
             return nil
         }
 
@@ -875,17 +871,18 @@ private struct FlowerAssetImage: View {
     }
     #else
     private static func image(kind: FlowerKind) -> UIImage? {
-        guard let url = Bundle.module.url(
-            forResource: kind.assetName,
-            withExtension: "png",
-            subdirectory: "Flowers"
-        ) else {
+        guard let url = imageURL(kind: kind) else {
             return nil
         }
 
         return UIImage(contentsOfFile: url.path)
     }
     #endif
+
+    private static func imageURL(kind: FlowerKind) -> URL? {
+        Bundle.module.url(forResource: kind.assetName, withExtension: "png")
+            ?? Bundle.module.url(forResource: kind.assetName, withExtension: "png", subdirectory: "Flowers")
+    }
 }
 
 #if os(macOS)
