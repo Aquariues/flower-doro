@@ -17,99 +17,40 @@ public struct FlowerDoroRootView: View {
     }
 
     public var body: some View {
-        compactTimer
-            .padding(8)
-            .frame(minWidth: 188, idealWidth: timer.isRunning ? 232 : 306, maxWidth: 380)
-            .frame(minHeight: 62, idealHeight: 74, maxHeight: 130)
-            .background {
-                if timer.isRunning {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(.clear)
-                } else {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(Color.black.opacity(0.001))
-                }
+        Group {
+            if timer.isRunning {
+                compactTimer
+                    .padding(8)
+                    .frame(minWidth: 188, idealWidth: 232, maxWidth: 380)
+                    .frame(minHeight: 62, idealHeight: 74, maxHeight: 130)
+                    .background {
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(.clear)
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .strokeBorder(timer.phase.tint.opacity(0.95), lineWidth: 2)
+                    }
+                    .padding(10)
+            } else {
+                Color.clear
+                    .frame(width: 1, height: 1)
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(timer.phase.tint.opacity(timer.isRunning ? 0.95 : 0.8), lineWidth: 2)
-            }
-            .padding(10)
-            .background(WindowTransparencyConfigurator())
-            .onHover { isHovering = $0 }
+        }
+        .background(WindowTransparencyConfigurator())
+        .onHover { isHovering = $0 }
     }
 
     @ViewBuilder
     private var compactTimer: some View {
-        if timer.isRunning {
-            runningTimer
-        } else {
-            stoppedTimer
-        }
+        runningTimer
     }
 
     private var runningTimer: some View {
         HStack(alignment: .center, spacing: 8) {
             clockFace
-
-            Button {
-                isGardenPresented.toggle()
-            } label: {
-                compactFlowerBadge
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
-                gardenPanel
-            }
-            .opacity(isHovering || !timer.garden.flowers.isEmpty ? 1 : 0.36)
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            timer.pause()
-        }
-        .help("Click to pause")
-    }
-
-    private var stoppedTimer: some View {
-        HStack(alignment: .center, spacing: 10) {
-            clockFace
-
-            Button {
-                timer.start()
-            } label: {
-                Image(systemName: "play.fill")
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 15, weight: .bold))
-            .foregroundStyle(timer.phase.tint)
-            .frame(width: 26, height: 26)
-            .help("Start")
-
-            Button {
-                isSettingsPresented.toggle()
-            } label: {
-                Image(systemName: "slider.horizontal.3")
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(timer.phase.tint.opacity(0.85))
-            .frame(width: 26, height: 26)
-            .popover(isPresented: $isSettingsPresented, arrowEdge: .bottom) {
-                settingsPanel
-            }
-            .help("Settings")
-
-            Button {
-                isGardenPresented.toggle()
-            } label: {
-                compactFlowerBadge
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
-                gardenPanel
-            }
-            .help("Garden")
-        }
     }
 
     @ViewBuilder
@@ -211,7 +152,6 @@ public struct FlowerDoroRootView: View {
         }
         .accessibilityLabel("Open garden")
     }
-
     private var settingsPanel: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Session")
@@ -319,6 +259,10 @@ public struct FlowerDoroDashboardView: View {
 
                 Divider()
 
+                statsGrid
+
+                Divider()
+
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Session")
                         .font(.headline)
@@ -367,6 +311,36 @@ public struct FlowerDoroDashboardView: View {
         }
         .frame(width: 360, height: 500)
         .background(.regularMaterial)
+    }
+
+    private var statsGrid: some View {
+        let stats = timer.stats
+
+        return HStack(spacing: 8) {
+            FocusStatCard(title: "Today", value: stats.today)
+            FocusStatCard(title: "Week", value: stats.thisWeek)
+            FocusStatCard(title: "Month", value: stats.thisMonth)
+        }
+    }
+}
+
+private struct FocusStatCard: View {
+    let title: String
+    let value: Int
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("\(value)")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .monospacedDigit()
+
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(Color.green.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
