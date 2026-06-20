@@ -44,11 +44,10 @@ jobs:
       - name: Build release archive
         run: |
           swift build --configuration release --product FlowerDoroMac
-          bin_path="$(swift build --configuration release --show-bin-path)"
+          app_path="$(scripts/prepare-macos-app.sh release)"
           mkdir -p dist
-          cp "$bin_path/FlowerDoroMac" dist/FlowerDoroMac
-          cp -R "$bin_path/FlowerDoro_FlowerDoro.bundle" dist/FlowerDoro_FlowerDoro.bundle
-          ditto -c -k --keepParent dist FlowerDoroMac-${{ steps.tag.outputs.tag }}.zip
+          cp -R "$app_path" dist/FlowerDoroMac.app
+          ditto -c -k --keepParent dist/FlowerDoroMac.app FlowerDoroMac-${{ steps.tag.outputs.tag }}.zip
 
       - name: Publish GitHub release
         env:
