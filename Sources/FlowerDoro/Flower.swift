@@ -4,6 +4,13 @@ public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
     case daisy
     case rose
     case sunflower
+    case tulip
+    case lotus
+    case lavender
+    case orchid
+    case cherryBlossom
+    case poppy
+    case hydrangea
 
     public var id: String { rawValue }
 
@@ -15,11 +22,30 @@ public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
             "Rose"
         case .sunflower:
             "Sunflower"
+        case .tulip:
+            "Tulip"
+        case .lotus:
+            "Lotus"
+        case .lavender:
+            "Lavender"
+        case .orchid:
+            "Orchid"
+        case .cherryBlossom:
+            "Cherry Blossom"
+        case .poppy:
+            "Poppy"
+        case .hydrangea:
+            "Hydrangea"
         }
     }
 
     public var assetName: String {
-        rawValue
+        switch self {
+        case .cherryBlossom:
+            "cherry-blossom"
+        default:
+            rawValue
+        }
     }
 
     public var symbolName: String {
@@ -30,6 +56,20 @@ public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
             "seal"
         case .sunflower:
             "sun.max"
+        case .tulip:
+            "tulip"
+        case .lotus:
+            "water.waves"
+        case .lavender:
+            "leaf"
+        case .orchid:
+            "camera.macro"
+        case .cherryBlossom:
+            "sparkle"
+        case .poppy:
+            "circle.hexagongrid"
+        case .hydrangea:
+            "circle.grid.3x3.circle"
         }
     }
 
