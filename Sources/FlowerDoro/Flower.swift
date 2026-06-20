@@ -38,6 +38,45 @@ public enum FlowerKind: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
+public enum ClockStyle: String, CaseIterable, Identifiable, Equatable {
+    case outline
+    case petal
+    case gardenBed
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .outline:
+            "Outline"
+        case .petal:
+            "Petal"
+        case .gardenBed:
+            "Garden Bed"
+        }
+    }
+}
+
+public enum FlowerGrowthStage: String, Equatable {
+    case seed
+    case sprout
+    case bud
+    case bloom
+
+    public static func stage(for progress: Double) -> FlowerGrowthStage {
+        switch min(max(progress, 0), 1) {
+        case 0..<0.25:
+            .seed
+        case 0.25..<0.55:
+            .sprout
+        case 0.55..<0.9:
+            .bud
+        default:
+            .bloom
+        }
+    }
+}
+
 public struct Flower: Identifiable, Equatable {
     public let id: UUID
     public let kind: FlowerKind

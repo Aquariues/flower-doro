@@ -15,6 +15,8 @@ public final class FocusTimerStore: ObservableObject {
     @Published public private(set) var isRunning: Bool
     @Published public private(set) var garden: UserGarden
     @Published public private(set) var latestFlower: Flower?
+    @Published public var clockStyle: ClockStyle
+    @Published public private(set) var activeFlowerKind: FlowerKind?
 
     private var totalSeconds: Int
     private var ticker: Timer?
@@ -28,6 +30,8 @@ public final class FocusTimerStore: ObservableObject {
         self.isRunning = false
         self.garden = garden
         self.latestFlower = garden.flowers.first
+        self.clockStyle = .gardenBed
+        self.activeFlowerKind = nil
     }
 
     deinit {
@@ -37,6 +41,14 @@ public final class FocusTimerStore: ObservableObject {
     public var progress: Double {
         guard totalSeconds > 0 else { return 0 }
         return 1 - (Double(remainingSeconds) / Double(totalSeconds))
+    }
+
+    public var focusGrowthProgress: Double {
+        phase == .work ? progress : 1
+    }
+
+    public var focusGrowthStage: FlowerGrowthStage {
+        FlowerGrowthStage.stage(for: focusGrowthProgress)
     }
 
     public var isRunningFocus: Bool {
@@ -67,6 +79,7 @@ public final class FocusTimerStore: ObservableObject {
 
     public func start() {
         guard !isRunning else { return }
+        prepareActiveFlowerIfNeeded()
         isRunning = true
         ticker = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -86,6 +99,7 @@ public final class FocusTimerStore: ObservableObject {
         phase = .work
         totalSeconds = workMinutes * 60
         remainingSeconds = totalSeconds
+        activeFlowerKind = nil
     }
 
     public func tick() {
@@ -110,7 +124,8 @@ public final class FocusTimerStore: ObservableObject {
     private func completeCurrentPhase() {
         switch phase {
         case .work:
-            addFlower()
+            addFlower(kind: activeFlowerKind ?? .random())
+            activeFlowerKind = nil
             phase = .break
             totalSeconds = breakMinutes * 60
             remainingSeconds = totalSeconds
@@ -125,5 +140,10 @@ public final class FocusTimerStore: ObservableObject {
         guard !isRunning else { return }
         totalSeconds = phase == .work ? workMinutes * 60 : breakMinutes * 60
         remainingSeconds = totalSeconds
+    }
+
+    private func prepareActiveFlowerIfNeeded() {
+        guard phase == .work, activeFlowerKind == nil else { return }
+        activeFlowerKind = FlowerKind.random()
     }
 }
