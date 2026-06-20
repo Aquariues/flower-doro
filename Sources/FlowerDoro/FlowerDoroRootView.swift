@@ -617,8 +617,9 @@ private struct GardenBedView: View {
     let activeProgress: Double
 
     private var groupedFlowers: [(kind: FlowerKind, count: Int, minutes: Int)] {
-        FlowerKind.allCases.map { kind in
+        FlowerKind.allCases.compactMap { kind in
             let matching = flowers.filter { $0.kind == kind }
+            guard !matching.isEmpty else { return nil }
             return (
                 kind: kind,
                 count: matching.count,
@@ -669,18 +670,20 @@ private struct GardenBedView: View {
                             .padding(10)
                     }
 
-                HStack(alignment: .bottom, spacing: 10) {
-                    ForEach(groupedFlowers, id: \.kind) { plot in
-                        GardenPlotView(kind: plot.kind, count: plot.count, minutes: plot.minutes)
-                    }
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .bottom, spacing: 10) {
+                        if let activeKind {
+                            GrowingPlotView(kind: activeKind, stage: activeStage, progress: activeProgress)
+                        }
 
-                    if let activeKind {
-                        GrowingPlotView(kind: activeKind, stage: activeStage, progress: activeProgress)
+                        ForEach(groupedFlowers, id: \.kind) { plot in
+                            GardenPlotView(kind: plot.kind, count: plot.count, minutes: plot.minutes)
+                        }
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
+                    .padding(.top, 40)
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
-                .padding(.top, 40)
             }
             .frame(minHeight: 170)
 
@@ -756,6 +759,7 @@ private struct GardenPlotView: View {
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
+        .frame(width: 82)
         .padding(.vertical, 8)
         .padding(.horizontal, 6)
         .background(.white.opacity(count == 0 ? 0.08 : 0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -946,6 +950,20 @@ private extension FlowerKind {
             .red
         case .sunflower:
             .orange
+        case .tulip:
+            .pink
+        case .lotus:
+            Color(red: 1, green: 0.63, blue: 0.76)
+        case .lavender:
+            .purple
+        case .orchid:
+            Color(red: 0.66, green: 0.35, blue: 0.95)
+        case .cherryBlossom:
+            Color(red: 1, green: 0.70, blue: 0.78)
+        case .poppy:
+            Color(red: 0.95, green: 0.22, blue: 0.12)
+        case .hydrangea:
+            Color(red: 0.36, green: 0.55, blue: 1)
         }
     }
 }
