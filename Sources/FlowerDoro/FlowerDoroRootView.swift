@@ -535,7 +535,7 @@ private struct FlowerBookSpreadView: View {
         VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(red: 0.03, green: 0.32, blue: 0.31))
+                    .fill(Color(red: 0.02, green: 0.24, blue: 0.23))
                     .shadow(color: .black.opacity(0.20), radius: 8, y: 4)
 
                 HStack(spacing: 0) {
@@ -557,7 +557,7 @@ private struct FlowerBookSpreadView: View {
                 Rectangle()
                     .fill(
                         LinearGradient(
-                            colors: [.black.opacity(0.18), .white.opacity(0.08), .black.opacity(0.16)],
+                            colors: [.black.opacity(0.10), .white.opacity(0.30), .black.opacity(0.08)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
@@ -613,13 +613,13 @@ private struct FlowerBookPageView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isUnlocked ? kind.displayName : "????")
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(isUnlocked ? .primary : .secondary)
+                        .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.18, green: 0.18, blue: 0.18))
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
                     Text(isUnlocked ? "\(count) collected" : "Unknown flower")
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(isUnlocked ? kind.tint : .secondary)
+                        .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.34, green: 0.34, blue: 0.34))
                         .monospacedDigit()
                 }
 
@@ -627,7 +627,7 @@ private struct FlowerBookPageView: View {
 
                 Image(systemName: isUnlocked ? "bookmark.fill" : "lock.fill")
                     .font(.caption.weight(.bold))
-                    .foregroundStyle(isUnlocked ? kind.tint : .secondary)
+                    .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.42, green: 0.42, blue: 0.42))
             }
 
             ZStack {
@@ -641,14 +641,14 @@ private struct FlowerBookPageView: View {
                 } else {
                     Text("????")
                         .font(.title3.weight(.bold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(red: 0.34, green: 0.34, blue: 0.34))
                 }
             }
             .frame(maxWidth: .infinity)
 
             Text(isUnlocked ? kind.shortDescription : "Keep focusing to reveal this page.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(red: 0.12, green: 0.12, blue: 0.12))
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -662,7 +662,7 @@ private struct FlowerBookPageView: View {
 
                         Text(fact)
                             .font(.caption2)
-                            .foregroundStyle(isUnlocked ? .primary : .secondary)
+                            .foregroundStyle(isUnlocked ? Color(red: 0.10, green: 0.10, blue: 0.10) : Color(red: 0.34, green: 0.34, blue: 0.34))
                             .lineLimit(2)
                     }
                 }
@@ -684,8 +684,8 @@ private struct FlowerBookPageView: View {
     private var pageBackground: some ShapeStyle {
         LinearGradient(
             colors: [
-                Color(red: 0.98, green: 0.95, blue: 0.86),
-                Color(red: 0.91, green: 0.88, blue: 0.78)
+                .white,
+                Color(red: 0.97, green: 0.97, blue: 0.94)
             ],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
@@ -707,8 +707,8 @@ private struct BlankBookPageView: View {
             .fill(
                 LinearGradient(
                     colors: [
-                        Color(red: 0.98, green: 0.95, blue: 0.86),
-                        Color(red: 0.91, green: 0.88, blue: 0.78)
+                        .white,
+                        Color(red: 0.97, green: 0.97, blue: 0.94)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
