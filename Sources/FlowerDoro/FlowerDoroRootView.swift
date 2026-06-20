@@ -214,6 +214,8 @@ public struct FlowerDoroRootView: View {
 public struct FlowerDoroDashboardView: View {
     @ObservedObject private var timer: FocusTimerStore
     @StateObject private var updateChecker = ReleaseUpdateChecker()
+    @State private var selectedDashboardTab: DashboardTab = .garden
+    @State private var flowerBookSpreadIndex = 0
     @AppStorage("FlowerDoro.autoCheckUpdates") private var autoCheckUpdates = true
     @Environment(\.openURL) private var openURL
 
@@ -290,11 +292,7 @@ public struct FlowerDoroDashboardView: View {
 
                 Divider()
 
-                gardenSection
-
-                Divider()
-
-                flowerBookSection
+                collectionTabs
 
                 Divider()
 
@@ -302,7 +300,7 @@ public struct FlowerDoroDashboardView: View {
             }
             .padding()
         }
-        .frame(width: 390, height: 680)
+        .frame(width: 430, height: 700)
         .background(.regularMaterial)
         .task {
             if autoCheckUpdates {
@@ -358,6 +356,24 @@ public struct FlowerDoroDashboardView: View {
         }
     }
 
+    private var collectionTabs: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Picker("Collection", selection: $selectedDashboardTab) {
+                ForEach(DashboardTab.allCases) { tab in
+                    Text(tab.title).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            switch selectedDashboardTab {
+            case .garden:
+                gardenSection
+            case .flowerBook:
+                flowerBookSection
+            }
+        }
+    }
+
     private var flowerBookSection: some View {
         let unlockedKinds = Set(timer.garden.flowers.map(\.kind))
 
@@ -374,17 +390,11 @@ public struct FlowerDoroDashboardView: View {
                     .monospacedDigit()
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 10) {
-                    ForEach(FlowerKind.allCases) { kind in
-                        FlowerBookCard(
-                            kind: kind,
-                            isUnlocked: unlockedKinds.contains(kind),
-                            count: timer.garden.flowers.filter { $0.kind == kind }.count
-                        )
-                    }
-                }
-            }
+            FlowerBookSpreadView(
+                flowers: timer.garden.flowers,
+                unlockedKinds: unlockedKinds,
+                spreadIndex: $flowerBookSpreadIndex
+            )
         }
     }
 
@@ -489,43 +499,154 @@ private struct FocusStatCard: View {
     }
 }
 
-private struct FlowerBookCard: View {
+private enum DashboardTab: String, CaseIterable, Identifiable {
+    case garden
+    case flowerBook
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .garden:
+            "Garden"
+        case .flowerBook:
+            "Flower Book"
+        }
+    }
+}
+
+private struct FlowerBookSpreadView: View {
+    let flowers: [Flower]
+    let unlockedKinds: Set<FlowerKind>
+    @Binding var spreadIndex: Int
+
+    private var spreadCount: Int {
+        Int(ceil(Double(FlowerKind.allCases.count) / 2))
+    }
+
+    private var pageKinds: [FlowerKind] {
+        let start = spreadIndex * 2
+        return FlowerKind.allCases.enumerated()
+            .filter { start..<(start + 2) ~= $0.offset }
+            .map(\.element)
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color(red: 0.03, green: 0.32, blue: 0.31))
+                    .shadow(color: .black.opacity(0.20), radius: 8, y: 4)
+
+                HStack(spacing: 0) {
+                    ForEach(pageKinds, id: \.self) { kind in
+                        FlowerBookPageView(
+                            kind: kind,
+                            isUnlocked: unlockedKinds.contains(kind),
+                            count: flowers.filter { $0.kind == kind }.count
+                        )
+                    }
+
+                    if pageKinds.count == 1 {
+                        BlankBookPageView()
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [.black.opacity(0.18), .white.opacity(0.08), .black.opacity(0.16)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: 14)
+                    .blur(radius: 1.5)
+            }
+            .frame(height: 300)
+
+            HStack(spacing: 12) {
+                Button {
+                    spreadIndex = max(spreadIndex - 1, 0)
+                } label: {
+                    Image(systemName: "chevron.left")
+                }
+                .buttonStyle(.bordered)
+                .disabled(spreadIndex == 0)
+                .help("Previous page")
+
+                Spacer()
+
+                Text("Page \(spreadIndex + 1) / \(spreadCount)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+
+                Spacer()
+
+                Button {
+                    spreadIndex = min(spreadIndex + 1, spreadCount - 1)
+                } label: {
+                    Image(systemName: "chevron.right")
+                }
+                .buttonStyle(.bordered)
+                .disabled(spreadIndex >= spreadCount - 1)
+                .help("Next page")
+            }
+        }
+        .onAppear {
+            spreadIndex = min(spreadIndex, max(spreadCount - 1, 0))
+        }
+    }
+}
+
+private struct FlowerBookPageView: View {
     let kind: FlowerKind
     let isUnlocked: Bool
     let count: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(isUnlocked ? kind.tint.opacity(0.16) : Color.secondary.opacity(0.12))
-
-                    if isUnlocked {
-                        FlowerAssetImage(kind: kind)
-                            .frame(width: 42, height: 42)
-                    } else {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .frame(width: 54, height: 54)
-
-                VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(isUnlocked ? kind.displayName : "????")
-                        .font(.callout.weight(.bold))
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(isUnlocked ? .primary : .secondary)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                        .minimumScaleFactor(0.72)
 
-                    Text(isUnlocked ? "\(count) unlocked" : "Locked")
+                    Text(isUnlocked ? "\(count) collected" : "Unknown flower")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(isUnlocked ? kind.tint : .secondary)
                         .monospacedDigit()
                 }
+
+                Spacer()
+
+                Image(systemName: isUnlocked ? "bookmark.fill" : "lock.fill")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(isUnlocked ? kind.tint : .secondary)
             }
 
-            Text(isUnlocked ? kind.shortDescription : "Finish focus sessions to discover this flower.")
+            ZStack {
+                Circle()
+                    .fill(isUnlocked ? kind.tint.opacity(0.12) : Color.secondary.opacity(0.10))
+                    .frame(width: 72, height: 72)
+
+                if isUnlocked {
+                    FlowerAssetImage(kind: kind)
+                        .frame(width: 70, height: 70)
+                } else {
+                    Text("????")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+            Text(isUnlocked ? kind.shortDescription : "Keep focusing to reveal this page.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(3)
@@ -535,7 +656,7 @@ private struct FlowerBookCard: View {
                 ForEach(displayFacts, id: \.self) { fact in
                     HStack(alignment: .top, spacing: 5) {
                         Circle()
-                            .fill(isUnlocked ? kind.tint.opacity(0.7) : Color.secondary.opacity(0.35))
+                            .fill(isUnlocked ? kind.tint : Color.secondary.opacity(0.55))
                             .frame(width: 4, height: 4)
                             .padding(.top, 5)
 
@@ -546,15 +667,29 @@ private struct FlowerBookCard: View {
                     }
                 }
             }
+
+            Spacer(minLength: 0)
         }
-        .frame(width: 230, alignment: .topLeading)
-        .padding(12)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(isUnlocked ? kind.tint.opacity(0.35) : Color.secondary.opacity(0.14), lineWidth: 1)
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(pageBackground)
+        .overlay(alignment: .trailing) {
+            Rectangle()
+                .fill(.black.opacity(0.05))
+                .frame(width: 1)
         }
-        .accessibilityLabel(isUnlocked ? "\(kind.displayName) flower book entry" : "Locked flower book entry")
+        .accessibilityLabel(isUnlocked ? "\(kind.displayName) flower book page" : "Locked flower book page")
+    }
+
+    private var pageBackground: some ShapeStyle {
+        LinearGradient(
+            colors: [
+                Color(red: 0.98, green: 0.95, blue: 0.86),
+                Color(red: 0.91, green: 0.88, blue: 0.78)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     private var displayFacts: [String] {
@@ -563,6 +698,23 @@ private struct FlowerBookCard: View {
         } else {
             ["????", "????"]
         }
+    }
+}
+
+private struct BlankBookPageView: View {
+    var body: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.98, green: 0.95, blue: 0.86),
+                        Color(red: 0.91, green: 0.88, blue: 0.78)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
