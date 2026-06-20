@@ -614,12 +614,14 @@ private struct FlowerBookPageView: View {
                     Text(isUnlocked ? kind.displayName : "????")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.18, green: 0.18, blue: 0.18))
+                        .shadow(color: .black.opacity(isUnlocked ? 0.24 : 0.12), radius: 0.6, x: 0, y: 0.8)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
                     Text(isUnlocked ? "\(count) collected" : "Unknown flower")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.34, green: 0.34, blue: 0.34))
+                        .shadow(color: .black.opacity(isUnlocked ? 0.20 : 0.10), radius: 0.5, x: 0, y: 0.7)
                         .monospacedDigit()
                 }
 
@@ -642,6 +644,7 @@ private struct FlowerBookPageView: View {
                     Text("????")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(Color(red: 0.34, green: 0.34, blue: 0.34))
+                        .shadow(color: .black.opacity(0.12), radius: 0.6, x: 0, y: 0.8)
                 }
             }
             .frame(maxWidth: .infinity)
