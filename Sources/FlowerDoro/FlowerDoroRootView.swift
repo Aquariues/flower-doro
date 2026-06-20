@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if os(macOS)
+import AppKit
+#endif
+
 public struct FlowerDoroRootView: View {
     @StateObject private var timer = FocusTimerStore()
     @State private var isGardenPresented = false
@@ -209,6 +213,9 @@ public struct FlowerDoroRootView: View {
 
 public struct FlowerDoroDashboardView: View {
     @ObservedObject private var timer: FocusTimerStore
+    @StateObject private var updateChecker = ReleaseUpdateChecker()
+    @AppStorage("FlowerDoro.autoCheckUpdates") private var autoCheckUpdates = true
+    @Environment(\.openURL) private var openURL
 
     public init(timer: FocusTimerStore) {
         self.timer = timer
@@ -283,34 +290,27 @@ public struct FlowerDoroDashboardView: View {
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text(timer.gardenTitle)
-                            .font(.headline)
+                gardenSection
 
-                        Spacer()
+                Divider()
 
-                        Text("\(timer.garden.flowers.count) flowers")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-
-                    if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
-                        Text("Finish a focus session to grow your first flower.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 14)
-                    } else {
-                        GardenBedView(flowers: timer.garden.flowers, activeKind: timer.activeFlowerKind, activeStage: timer.focusGrowthStage, activeProgress: timer.focusGrowthProgress)
-                    }
-                }
+                appSection
             }
             .padding()
         }
-        .frame(width: 360, height: 500)
+        .frame(width: 390, height: 620)
         .background(.regularMaterial)
+        .task {
+            if autoCheckUpdates {
+                await updateChecker.checkForUpdates()
+            }
+        }
+        .onChange(of: autoCheckUpdates) { _, isEnabled in
+            guard isEnabled else { return }
+            Task {
+                await updateChecker.checkForUpdates()
+            }
+        }
     }
 
     private var statsGrid: some View {
@@ -320,6 +320,117 @@ public struct FlowerDoroDashboardView: View {
             FocusStatCard(title: "Today", value: stats.today)
             FocusStatCard(title: "Week", value: stats.thisWeek)
             FocusStatCard(title: "Month", value: stats.thisMonth)
+        }
+    }
+
+    private var gardenSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(timer.gardenTitle)
+                    .font(.headline)
+
+                Spacer()
+
+                Text("\(timer.garden.flowers.count) flowers")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+
+            if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
+                Text("Finish a focus session to grow your first flower.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 14)
+            } else {
+                GardenBedView(
+                    flowers: timer.garden.flowers,
+                    activeKind: timer.activeFlowerKind,
+                    activeStage: timer.focusGrowthStage,
+                    activeProgress: timer.focusGrowthProgress
+                )
+            }
+        }
+    }
+
+    private var appSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("App")
+                .font(.headline)
+
+            Toggle("Auto check updates", isOn: $autoCheckUpdates)
+
+            updateStatusView
+
+            HStack(spacing: 10) {
+                Button {
+                    Task {
+                        await updateChecker.checkForUpdates()
+                    }
+                } label: {
+                    Label("Check Updates", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(updateChecker.status == .checking)
+
+                if let releaseURL = latestReleaseURL {
+                    Button {
+                        openURL(releaseURL)
+                    } label: {
+                        Label("Open Release", systemImage: "arrow.down.circle")
+                    }
+                }
+
+                Spacer()
+
+                #if os(macOS)
+                Button(role: .destructive) {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    Label("Quit", systemImage: "power")
+                }
+                #endif
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    @ViewBuilder
+    private var updateStatusView: some View {
+        switch updateChecker.status {
+        case .idle:
+            Text("Updates use GitHub releases.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .checking:
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Checking GitHub releases...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        case .available(let release):
+            Text("Latest: \(release.name)")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.green)
+                .lineLimit(1)
+        case .unavailable:
+            Text("You are up to date.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        case .failed(let message):
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+        }
+    }
+
+    private var latestReleaseURL: URL? {
+        if case .available(let release) = updateChecker.status {
+            release.htmlURL
+        } else {
+            URL(string: "https://github.com/Aquariues/flower-doro/releases/latest")
         }
     }
 }
@@ -505,91 +616,216 @@ private struct GardenBedView: View {
     let activeStage: FlowerGrowthStage
     let activeProgress: Double
 
+    private var groupedFlowers: [(kind: FlowerKind, count: Int, minutes: Int)] {
+        FlowerKind.allCases.map { kind in
+            let matching = flowers.filter { $0.kind == kind }
+            return (
+                kind: kind,
+                count: matching.count,
+                minutes: matching.reduce(0) { $0 + $1.focusMinutes }
+            )
+        }
+    }
+
+    private var recentFlowers: [Flower] {
+        Array(flowers.prefix(8))
+    }
+
     var body: some View {
-        VStack(spacing: 10) {
-            ZStack(alignment: .bottomLeading) {
+        VStack(alignment: .leading, spacing: 12) {
+            ZStack(alignment: .bottom) {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(
                         LinearGradient(
-                            colors: [Color.brown.opacity(0.26), Color.green.opacity(0.10)],
+                            colors: [
+                                Color(red: 0.12, green: 0.30, blue: 0.18).opacity(0.88),
+                                Color(red: 0.18, green: 0.45, blue: 0.25).opacity(0.46)
+                            ],
                             startPoint: .bottom,
                             endPoint: .top
                         )
                     )
                     .overlay(alignment: .bottom) {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.brown.opacity(0.36))
-                            .frame(height: 38)
-                    }
-
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 74), spacing: 10)], spacing: 12) {
-                    if let activeKind {
-                        GardenPlantView(
-                            label: "Growing",
-                            kind: activeKind,
-                            stage: activeStage,
-                            progress: activeProgress,
-                            isActive: true
+                        UnevenRoundedRectangle(
+                            cornerRadii: RectangleCornerRadii(
+                                topLeading: 0,
+                                bottomLeading: 8,
+                                bottomTrailing: 8,
+                                topTrailing: 0
+                            ),
+                            style: .continuous
                         )
+                        .fill(Color(red: 0.39, green: 0.25, blue: 0.13).opacity(0.78))
+                        .frame(height: 52)
+                    }
+                    .overlay(alignment: .topLeading) {
+                        Text("\(flowers.count) blooms")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.white.opacity(0.86))
+                            .monospacedDigit()
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .background(.black.opacity(0.18), in: Capsule())
+                            .padding(10)
                     }
 
-                    ForEach(flowers) { flower in
-                        GardenPlantView(label: flower.kind.displayName, kind: flower.kind, stage: .bloom, progress: 1, isActive: false)
+                HStack(alignment: .bottom, spacing: 10) {
+                    ForEach(groupedFlowers, id: \.kind) { plot in
+                        GardenPlotView(kind: plot.kind, count: plot.count, minutes: plot.minutes)
+                    }
+
+                    if let activeKind {
+                        GrowingPlotView(kind: activeKind, stage: activeStage, progress: activeProgress)
                     }
                 }
-                .padding(12)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
+                .padding(.top, 40)
             }
-            .frame(minHeight: 168)
+            .frame(minHeight: 170)
+
+            if !recentFlowers.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Recent blooms")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(recentFlowers) { flower in
+                                RecentBloomPill(flower: flower)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-private struct GardenPlantView: View {
-    let label: String
+private struct GardenPlotView: View {
     let kind: FlowerKind
-    let stage: FlowerGrowthStage
-    let progress: Double
-    let isActive: Bool
+    let count: Int
+    let minutes: Int
 
-    var body: some View {
-        VStack(spacing: 4) {
-            GrowingFlowerView(kind: kind, stage: stage, progress: progress, tint: .green)
-                .frame(width: 54, height: 62)
-
-            Text(label)
-                .font(.caption2.weight(isActive ? .bold : .medium))
-                .foregroundStyle(isActive ? .green : .secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(width: 74, height: 90)
-        .background(isActive ? Color.green.opacity(0.12) : Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    private var flowerSlots: Int {
+        min(max(count, 1), 5)
     }
-}
 
-private struct FlowerTile: View {
-    let flower: Flower
+    private var opacity: Double {
+        count == 0 ? 0.22 : 1
+    }
 
     var body: some View {
         VStack(spacing: 6) {
-            FlowerAssetImage(kind: flower.kind)
-                .frame(width: 46, height: 46)
+            ZStack(alignment: .bottom) {
+                Capsule()
+                    .fill(Color.black.opacity(0.14))
+                    .frame(height: 18)
+                    .offset(y: 3)
 
-            Text(flower.kind.displayName)
-                .font(.caption2)
+                HStack(alignment: .bottom, spacing: -8) {
+                    ForEach(0..<flowerSlots, id: \.self) { index in
+                        FlowerAssetImage(kind: kind)
+                            .frame(width: 28, height: 34)
+                            .scaleEffect(index == 2 ? 1.04 : 0.88)
+                            .offset(y: index.isMultiple(of: 2) ? 0 : 4)
+                    }
+                }
+                .opacity(opacity)
+            }
+            .frame(height: 48)
+
+            Text(kind.displayName)
+                .font(.caption2.weight(.bold))
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
 
-            Text("\(flower.focusMinutes)m")
-                .font(.caption)
-                .monospacedDigit()
+            HStack(spacing: 3) {
+                Text("\(count)")
+                    .font(.caption.weight(.bold))
+                    .monospacedDigit()
+
+                Text("x")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text("\(minutes)m")
+                .font(.caption2)
                 .foregroundStyle(.secondary)
+                .monospacedDigit()
         }
-        .frame(width: 76, height: 86)
-        .background(.thinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .padding(.horizontal, 6)
+        .background(.white.opacity(count == 0 ? 0.08 : 0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(kind.tint.opacity(count == 0 ? 0.12 : 0.44), lineWidth: 1)
+        }
+        .foregroundStyle(count == 0 ? .secondary : .primary)
+    }
+}
+
+private struct GrowingPlotView: View {
+    let kind: FlowerKind
+    let stage: FlowerGrowthStage
+    let progress: Double
+
+    var body: some View {
+        VStack(spacing: 6) {
+            GrowingFlowerView(kind: kind, stage: stage, progress: progress, tint: .green)
+                .frame(width: 42, height: 54)
+
+            Text("Growing")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.green)
+
+            ProgressView(value: progress)
+                .tint(.green)
+                .frame(width: 48)
+        }
+        .frame(width: 76)
+        .padding(.vertical, 8)
+        .background(.green.opacity(0.16), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.green.opacity(0.54), lineWidth: 1)
+        }
+    }
+}
+
+private struct RecentBloomPill: View {
+    let flower: Flower
+
+    var body: some View {
+        HStack(spacing: 6) {
+            FlowerAssetImage(kind: flower.kind)
+                .frame(width: 22, height: 22)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(flower.kind.displayName)
+                    .font(.caption2.weight(.bold))
+                    .lineLimit(1)
+
+                Text(Self.dateFormatter.string(from: flower.earnedAt))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .accessibilityLabel("\(flower.kind.displayName) earned from \(flower.focusMinutes) minutes of focus")
     }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        return formatter
+    }()
 }
 
 private struct FlowerAssetImage: View {
