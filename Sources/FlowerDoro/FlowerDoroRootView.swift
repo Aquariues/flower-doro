@@ -18,22 +18,21 @@ public struct FlowerDoroRootView: View {
 
     public var body: some View {
         compactTimer
-            .padding(timer.isRunning ? 8 : 14)
-            .frame(minWidth: timer.isRunning ? 188 : 240, idealWidth: timer.isRunning ? 232 : 290, maxWidth: 380)
-            .frame(minHeight: timer.isRunning ? 62 : 146, idealHeight: timer.isRunning ? 74 : 174, maxHeight: 460)
+            .padding(8)
+            .frame(minWidth: 188, idealWidth: timer.isRunning ? 232 : 306, maxWidth: 380)
+            .frame(minHeight: 62, idealHeight: 74, maxHeight: 130)
             .background {
                 if timer.isRunning {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(.clear)
                 } else {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.16), radius: 24, y: 10)
+                        .fill(Color.black.opacity(0.001))
                 }
             }
             .overlay {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(timer.phase.tint.opacity(timer.isRunning ? 0.95 : 0.38), lineWidth: timer.isRunning ? 2 : 1)
+                    .strokeBorder(timer.phase.tint.opacity(timer.isRunning ? 0.95 : 0.8), lineWidth: 2)
             }
             .padding(10)
             .background(WindowTransparencyConfigurator())
@@ -51,20 +50,7 @@ public struct FlowerDoroRootView: View {
 
     private var runningTimer: some View {
         HStack(alignment: .center, spacing: 8) {
-            Text(timer.remainingTimeText)
-                .font(.system(size: 35, weight: .bold, design: .rounded))
-                .foregroundStyle(timer.phase.tint)
-                .monospacedDigit()
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-
-            if timer.isRunningFocus {
-                BloomingFlowerView(progress: timer.progress, tint: timer.phase.tint)
-                    .frame(width: 30, height: 30)
-                    .opacity(0.82)
-                    .accessibilityLabel("Hoa dang no")
-            }
+            clockFace
 
             Button {
                 isGardenPresented.toggle()
@@ -85,64 +71,91 @@ public struct FlowerDoroRootView: View {
     }
 
     private var stoppedTimer: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 10) {
-                phaseBadge
+        HStack(alignment: .center, spacing: 10) {
+            clockFace
 
-                Spacer(minLength: 8)
-
-                Button {
-                    isSettingsPresented.toggle()
-                } label: {
-                    Image(systemName: "slider.horizontal.3")
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 28, height: 28)
-                .background(.thinMaterial)
-                .clipShape(Circle())
-                .popover(isPresented: $isSettingsPresented, arrowEdge: .bottom) {
-                    settingsPanel
-                }
-
-                Button {
-                    isGardenPresented.toggle()
-                } label: {
-                    flowerBadge
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
-                    gardenPanel
-                }
+            Button {
+                timer.start()
+            } label: {
+                Image(systemName: "play.fill")
             }
+            .buttonStyle(.plain)
+            .font(.system(size: 15, weight: .bold))
+            .foregroundStyle(timer.phase.tint)
+            .frame(width: 26, height: 26)
+            .help("Start")
 
-            Text(timer.remainingTimeText)
-                .font(.system(size: 54, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .minimumScaleFactor(0.55)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity)
+            Button {
+                isSettingsPresented.toggle()
+            } label: {
+                Image(systemName: "slider.horizontal.3")
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(timer.phase.tint.opacity(0.85))
+            .frame(width: 26, height: 26)
+            .popover(isPresented: $isSettingsPresented, arrowEdge: .bottom) {
+                settingsPanel
+            }
+            .help("Settings")
 
-            ProgressView(value: timer.progress)
-                .tint(timer.phase.tint)
-                .controlSize(.small)
+            Button {
+                isGardenPresented.toggle()
+            } label: {
+                compactFlowerBadge
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: $isGardenPresented, arrowEdge: .bottom) {
+                gardenPanel
+            }
+            .help("Garden")
+        }
+    }
 
-            HStack(spacing: 8) {
-                Button(timer.isRunning ? "Pause" : "Start") {
-                    timer.toggleRunning()
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+    @ViewBuilder
+    private var clockFace: some View {
+        switch timer.clockStyle {
+        case .outline:
+            outlineClock
+        case .petal:
+            petalClock
+        case .gardenBed:
+            gardenBedClock
+        }
+    }
 
-                Button {
-                    timer.reset()
-                } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .help("Reset")
+    private var outlineClock: some View {
+        Text(timer.remainingTimeText)
+            .font(.system(size: 35, weight: .bold, design: .rounded))
+            .foregroundStyle(timer.phase.tint)
+            .monospacedDigit()
+            .minimumScaleFactor(0.7)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    private var petalClock: some View {
+        HStack(spacing: 7) {
+            PetalProgressMark(progress: timer.phase == .work ? timer.progress : 1 - timer.progress, tint: timer.phase.tint)
+                .frame(width: 26, height: 26)
+
+            outlineClock
+        }
+    }
+
+    private var gardenBedClock: some View {
+        HStack(spacing: 8) {
+            outlineClock
+
+            if timer.phase == .work {
+                GrowingFlowerView(
+                    kind: timer.activeFlowerKind ?? timer.latestFlower?.kind ?? .daisy,
+                    stage: timer.focusGrowthStage,
+                    progress: timer.focusGrowthProgress,
+                    tint: timer.phase.tint
+                )
+                .frame(width: 36, height: 34)
+                .accessibilityLabel("Flower growing")
             }
         }
     }
@@ -235,7 +248,7 @@ public struct FlowerDoroRootView: View {
                     .monospacedDigit()
             }
 
-            if timer.garden.flowers.isEmpty {
+            if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
                 Text("Finish a focus session to grow your first flower.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -243,12 +256,8 @@ public struct FlowerDoroRootView: View {
                     .padding(.vertical, 18)
             } else {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 12)], spacing: 12) {
-                        ForEach(timer.garden.flowers) { flower in
-                            FlowerTile(flower: flower)
-                        }
-                    }
-                    .padding(.vertical, 2)
+                    GardenBedView(flowers: timer.garden.flowers, activeKind: timer.activeFlowerKind, activeStage: timer.focusGrowthStage, activeProgress: timer.focusGrowthProgress)
+                        .padding(.vertical, 2)
                 }
                 .frame(maxHeight: 300)
             }
@@ -301,6 +310,13 @@ public struct FlowerDoroDashboardView: View {
                     .buttonStyle(.bordered)
                 }
 
+                Picker("Clock", selection: $timer.clockStyle) {
+                    ForEach(ClockStyle.allCases) { style in
+                        Text(style.displayName).tag(style)
+                    }
+                }
+                .pickerStyle(.segmented)
+
                 Divider()
 
                 VStack(alignment: .leading, spacing: 12) {
@@ -336,18 +352,14 @@ public struct FlowerDoroDashboardView: View {
                             .monospacedDigit()
                     }
 
-                    if timer.garden.flowers.isEmpty {
+                    if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
                         Text("Finish a focus session to grow your first flower.")
                             .font(.callout)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.vertical, 14)
                     } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 76), spacing: 12)], spacing: 12) {
-                            ForEach(timer.garden.flowers) { flower in
-                                FlowerTile(flower: flower)
-                            }
-                        }
+                        GardenBedView(flowers: timer.garden.flowers, activeKind: timer.activeFlowerKind, activeStage: timer.focusGrowthStage, activeProgress: timer.focusGrowthProgress)
                     }
                 }
             }
@@ -384,7 +396,35 @@ private struct MinuteField: View {
     }
 }
 
-private struct BloomingFlowerView: View {
+private struct PetalProgressMark: View {
+    let progress: Double
+    let tint: Color
+
+    private var filledPetals: Int {
+        Int((min(max(progress, 0), 1) * 8).rounded(.up))
+    }
+
+    var body: some View {
+        ZStack {
+            ForEach(0..<8, id: \.self) { index in
+                Capsule()
+                    .fill(index < filledPetals ? tint : tint.opacity(0.14))
+                    .frame(width: 5, height: 10)
+                    .offset(y: -7)
+                    .rotationEffect(.degrees(Double(index) * 45))
+            }
+
+            Circle()
+                .fill(tint.opacity(0.2))
+                .frame(width: 7, height: 7)
+        }
+        .animation(.easeInOut(duration: 0.2), value: filledPetals)
+    }
+}
+
+private struct GrowingFlowerView: View {
+    let kind: FlowerKind
+    let stage: FlowerGrowthStage
     let progress: Double
     let tint: Color
 
@@ -393,25 +433,163 @@ private struct BloomingFlowerView: View {
     }
 
     var body: some View {
-        ZStack {
-            ForEach(0..<8, id: \.self) { index in
-                Capsule()
-                    .stroke(tint.opacity(0.72), lineWidth: 1.6)
-                    .frame(width: 10 + bloom * 12, height: 20 + bloom * 24)
-                    .offset(y: -(8 + bloom * 12))
-                    .rotationEffect(.degrees(Double(index) * 45))
-                    .scaleEffect(0.35 + bloom * 0.65)
+        ZStack(alignment: .bottom) {
+            Capsule()
+                .fill(Color.brown.opacity(0.35))
+                .frame(width: 30, height: 6)
+                .offset(y: 1)
+
+            switch stage {
+            case .seed:
+                SeedView(tint: tint)
+                    .transition(.scale.combined(with: .opacity))
+            case .sprout:
+                SproutView(tint: tint)
+                    .transition(.scale.combined(with: .opacity))
+            case .bud:
+                BudView(kind: kind, tint: tint)
+                    .transition(.scale.combined(with: .opacity))
+            case .bloom:
+                FlowerAssetImage(kind: kind)
+                    .frame(width: 32, height: 32)
+                    .scaleEffect(0.75 + bloom * 0.25)
+                    .offset(y: -2)
+                    .transition(.scale.combined(with: .opacity))
             }
+        }
+        .animation(.easeInOut(duration: 0.35), value: stage)
+        .animation(.easeInOut(duration: 0.35), value: bloom)
+    }
+}
+
+private struct SeedView: View {
+    let tint: Color
+
+    var body: some View {
+        Circle()
+            .fill(Color.brown.opacity(0.62))
+            .frame(width: 10, height: 10)
+            .overlay {
+                Circle()
+                    .stroke(tint.opacity(0.45), lineWidth: 1)
+            }
+            .offset(y: -4)
+    }
+}
+
+private struct SproutView: View {
+    let tint: Color
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Capsule()
+                .fill(tint.opacity(0.62))
+                .frame(width: 4, height: 19)
+
+            HStack(spacing: 2) {
+                Capsule()
+                    .fill(tint.opacity(0.7))
+                    .frame(width: 10, height: 6)
+                    .rotationEffect(.degrees(-28))
+
+                Capsule()
+                    .fill(tint.opacity(0.7))
+                    .frame(width: 10, height: 6)
+                    .rotationEffect(.degrees(28))
+            }
+            .offset(y: -9)
+        }
+        .offset(y: -4)
+    }
+}
+
+private struct BudView: View {
+    let kind: FlowerKind
+    let tint: Color
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Capsule()
+                .fill(tint.opacity(0.52))
+                .frame(width: 4, height: 24)
 
             Circle()
-                .fill(tint.opacity(0.18))
-                .frame(width: 8 + bloom * 8, height: 8 + bloom * 8)
+                .fill(kind.tint.opacity(0.74))
+                .frame(width: 15, height: 15)
                 .overlay {
                     Circle()
-                        .stroke(tint.opacity(0.9), lineWidth: 1.2)
+                        .stroke(tint.opacity(0.65), lineWidth: 1)
                 }
+                .offset(y: -20)
         }
-        .animation(.easeInOut(duration: 0.35), value: bloom)
+    }
+}
+
+private struct GardenBedView: View {
+    let flowers: [Flower]
+    let activeKind: FlowerKind?
+    let activeStage: FlowerGrowthStage
+    let activeProgress: Double
+
+    var body: some View {
+        VStack(spacing: 10) {
+            ZStack(alignment: .bottomLeading) {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.brown.opacity(0.26), Color.green.opacity(0.10)],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+                    .overlay(alignment: .bottom) {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.brown.opacity(0.36))
+                            .frame(height: 38)
+                    }
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 74), spacing: 10)], spacing: 12) {
+                    if let activeKind {
+                        GardenPlantView(
+                            label: "Growing",
+                            kind: activeKind,
+                            stage: activeStage,
+                            progress: activeProgress,
+                            isActive: true
+                        )
+                    }
+
+                    ForEach(flowers) { flower in
+                        GardenPlantView(label: flower.kind.displayName, kind: flower.kind, stage: .bloom, progress: 1, isActive: false)
+                    }
+                }
+                .padding(12)
+            }
+            .frame(minHeight: 168)
+        }
+    }
+}
+
+private struct GardenPlantView: View {
+    let label: String
+    let kind: FlowerKind
+    let stage: FlowerGrowthStage
+    let progress: Double
+    let isActive: Bool
+
+    var body: some View {
+        VStack(spacing: 4) {
+            GrowingFlowerView(kind: kind, stage: stage, progress: progress, tint: .green)
+                .frame(width: 54, height: 62)
+
+            Text(label)
+                .font(.caption2.weight(isActive ? .bold : .medium))
+                .foregroundStyle(isActive ? .green : .secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(width: 74, height: 90)
+        .background(isActive ? Color.green.opacity(0.12) : Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
