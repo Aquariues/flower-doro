@@ -35,5 +35,11 @@ jobs:
       - name: Build macOS app product
         run: swift build --product FlowerDoroMac
 
+      - name: Prepare macOS app bundle
+        run: |
+          app_path="$(scripts/prepare-macos-app.sh debug)"
+          test -f "$app_path/Contents/Resources/FlowerDoro.icns"
+          test "$(plutil -extract CFBundleIconFile raw "$app_path/Contents/Info.plist")" = "FlowerDoro"
+
       - name: Run tests
         run: swift test
