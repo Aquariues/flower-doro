@@ -1,6 +1,6 @@
 import Foundation
 
-public enum FlowerKind: String, CaseIterable, Identifiable, Equatable {
+public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
     case daisy
     case rose
     case sunflower
@@ -38,7 +38,7 @@ public enum FlowerKind: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
-public enum ClockStyle: String, CaseIterable, Identifiable, Equatable {
+public enum ClockStyle: String, CaseIterable, Codable, Identifiable, Equatable {
     case outline
     case petal
     case gardenBed
@@ -57,7 +57,7 @@ public enum ClockStyle: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
-public enum FlowerGrowthStage: String, Equatable {
+public enum FlowerGrowthStage: String, Codable, Equatable {
     case seed
     case sprout
     case bud
@@ -77,7 +77,7 @@ public enum FlowerGrowthStage: String, Equatable {
     }
 }
 
-public struct Flower: Identifiable, Equatable {
+public struct Flower: Codable, Identifiable, Equatable {
     public let id: UUID
     public let kind: FlowerKind
     public let earnedAt: Date
@@ -91,7 +91,7 @@ public struct Flower: Identifiable, Equatable {
     }
 }
 
-public struct UserGarden: Identifiable, Equatable {
+public struct UserGarden: Codable, Identifiable, Equatable {
     public let id: UUID
     public var userName: String
     public var flowers: [Flower]

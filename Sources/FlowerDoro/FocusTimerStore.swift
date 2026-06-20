@@ -15,13 +15,28 @@ public final class FocusTimerStore: ObservableObject {
     @Published public private(set) var isRunning: Bool
     @Published public private(set) var garden: UserGarden
     @Published public private(set) var latestFlower: Flower?
-    @Published public var clockStyle: ClockStyle
+    @Published public var clockStyle: ClockStyle {
+        didSet { saveHistory() }
+    }
     @Published public private(set) var activeFlowerKind: FlowerKind?
 
     private var totalSeconds: Int
     private var ticker: Timer?
+    private let historyStore: FocusHistoryPersisting
 
-    public init(workMinutes: Int = 30, breakMinutes: Int = 5, garden: UserGarden = UserGarden()) {
+    public init(
+        workMinutes: Int? = nil,
+        breakMinutes: Int? = nil,
+        garden: UserGarden? = nil,
+        historyStore: FocusHistoryPersisting = FocusHistoryStore()
+    ) {
+        let history = historyStore.load()
+        let shouldLoadHistory = workMinutes == nil && breakMinutes == nil && garden == nil
+        let workMinutes = workMinutes ?? (shouldLoadHistory ? history.workMinutes : 30)
+        let breakMinutes = breakMinutes ?? (shouldLoadHistory ? history.breakMinutes : 5)
+        let garden = garden ?? (shouldLoadHistory ? history.garden : UserGarden())
+
+        self.historyStore = historyStore
         self.workMinutes = workMinutes
         self.breakMinutes = breakMinutes
         self.phase = .work
@@ -30,7 +45,7 @@ public final class FocusTimerStore: ObservableObject {
         self.isRunning = false
         self.garden = garden
         self.latestFlower = garden.flowers.first
-        self.clockStyle = .gardenBed
+        self.clockStyle = shouldLoadHistory ? history.clockStyle : .gardenBed
         self.activeFlowerKind = nil
     }
 
@@ -71,6 +86,16 @@ public final class FocusTimerStore: ObservableObject {
 
     public var gardenTitle: String {
         garden.userName == "You" ? "Your Garden" : "\(garden.userName)'s Garden"
+    }
+
+    public var stats: FocusStats {
+        let calendar = Calendar.current
+        let now = Date()
+        let flowers = garden.flowers
+        let today = flowers.filter { calendar.isDate($0.earnedAt, inSameDayAs: now) }.count
+        let week = flowers.filter { calendar.isDate($0.earnedAt, equalTo: now, toGranularity: .weekOfYear) }.count
+        let month = flowers.filter { calendar.isDate($0.earnedAt, equalTo: now, toGranularity: .month) }.count
+        return FocusStats(today: today, thisWeek: week, thisMonth: month, total: flowers.count)
     }
 
     public func toggleRunning() {
@@ -118,6 +143,7 @@ public final class FocusTimerStore: ObservableObject {
         let flower = Flower(kind: kind, earnedAt: earnedAt, focusMinutes: workMinutes)
         garden.flowers.insert(flower, at: 0)
         latestFlower = flower
+        saveHistory()
         return flower
     }
 
@@ -140,10 +166,22 @@ public final class FocusTimerStore: ObservableObject {
         guard !isRunning else { return }
         totalSeconds = phase == .work ? workMinutes * 60 : breakMinutes * 60
         remainingSeconds = totalSeconds
+        saveHistory()
     }
 
     private func prepareActiveFlowerIfNeeded() {
         guard phase == .work, activeFlowerKind == nil else { return }
         activeFlowerKind = FlowerKind.random()
+    }
+
+    private func saveHistory() {
+        historyStore.save(
+            FocusHistorySnapshot(
+                workMinutes: workMinutes,
+                breakMinutes: breakMinutes,
+                clockStyle: clockStyle,
+                garden: garden
+            )
+        )
     }
 }
