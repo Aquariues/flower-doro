@@ -294,11 +294,15 @@ public struct FlowerDoroDashboardView: View {
 
                 Divider()
 
+                flowerBookSection
+
+                Divider()
+
                 appSection
             }
             .padding()
         }
-        .frame(width: 390, height: 620)
+        .frame(width: 390, height: 680)
         .background(.regularMaterial)
         .task {
             if autoCheckUpdates {
@@ -350,6 +354,36 @@ public struct FlowerDoroDashboardView: View {
                     activeStage: timer.focusGrowthStage,
                     activeProgress: timer.focusGrowthProgress
                 )
+            }
+        }
+    }
+
+    private var flowerBookSection: some View {
+        let unlockedKinds = Set(timer.garden.flowers.map(\.kind))
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Flower Book")
+                    .font(.headline)
+
+                Spacer()
+
+                Text("\(unlockedKinds.count)/\(FlowerKind.allCases.count)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 10) {
+                    ForEach(FlowerKind.allCases) { kind in
+                        FlowerBookCard(
+                            kind: kind,
+                            isUnlocked: unlockedKinds.contains(kind),
+                            count: timer.garden.flowers.filter { $0.kind == kind }.count
+                        )
+                    }
+                }
             }
         }
     }
@@ -452,6 +486,83 @@ private struct FocusStatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(Color.green.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private struct FlowerBookCard: View {
+    let kind: FlowerKind
+    let isUnlocked: Bool
+    let count: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(isUnlocked ? kind.tint.opacity(0.16) : Color.secondary.opacity(0.12))
+
+                    if isUnlocked {
+                        FlowerAssetImage(kind: kind)
+                            .frame(width: 42, height: 42)
+                    } else {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: 54, height: 54)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(isUnlocked ? kind.displayName : "????")
+                        .font(.callout.weight(.bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    Text(isUnlocked ? "\(count) unlocked" : "Locked")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(isUnlocked ? kind.tint : .secondary)
+                        .monospacedDigit()
+                }
+            }
+
+            Text(isUnlocked ? kind.shortDescription : "Finish focus sessions to discover this flower.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(3)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 5) {
+                ForEach(displayFacts, id: \.self) { fact in
+                    HStack(alignment: .top, spacing: 5) {
+                        Circle()
+                            .fill(isUnlocked ? kind.tint.opacity(0.7) : Color.secondary.opacity(0.35))
+                            .frame(width: 4, height: 4)
+                            .padding(.top, 5)
+
+                        Text(fact)
+                            .font(.caption2)
+                            .foregroundStyle(isUnlocked ? .primary : .secondary)
+                            .lineLimit(2)
+                    }
+                }
+            }
+        }
+        .frame(width: 230, alignment: .topLeading)
+        .padding(12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(isUnlocked ? kind.tint.opacity(0.35) : Color.secondary.opacity(0.14), lineWidth: 1)
+        }
+        .accessibilityLabel(isUnlocked ? "\(kind.displayName) flower book entry" : "Locked flower book entry")
+    }
+
+    private var displayFacts: [String] {
+        if isUnlocked {
+            Array(kind.facts.prefix(2))
+        } else {
+            ["????", "????"]
+        }
     }
 }
 
