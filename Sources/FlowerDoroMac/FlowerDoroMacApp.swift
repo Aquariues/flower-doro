@@ -5,6 +5,12 @@ import SwiftUI
 struct FlowerDoroMacApp: App {
     @StateObject private var timer = FocusTimerStore()
 
+    init() {
+        UserDefaults.standard.register(defaults: [
+            "FlowerDoro.language": AppLanguage.vietnamese.rawValue
+        ])
+    }
+
     var body: some Scene {
         WindowGroup {
             FlowerDoroRootView(timer: timer)

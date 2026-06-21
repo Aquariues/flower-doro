@@ -252,6 +252,15 @@ public struct FlowerDoroDashboardView: View {
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .foregroundStyle(timer.phase.tint)
                         .monospacedDigit()
+
+                    Picker(copy.languageLabel, selection: languageBinding) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.displayName).tag(language.rawValue)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.menu)
+                    .frame(width: 118)
                 }
 
                 ProgressView(value: timer.progress)
