@@ -9,6 +9,12 @@ public struct ReleaseUpdate: Equatable {
 
 @MainActor
 public final class ReleaseUpdateChecker: ObservableObject {
+    public enum FailureMessage {
+        public static let unreachable = "release.unreachable"
+        public static let invalidLink = "release.invalidLink"
+        public static let checkFailed = "release.checkFailed"
+    }
+
     public enum Status: Equatable {
         case idle
         case checking
@@ -40,13 +46,13 @@ public final class ReleaseUpdateChecker: ObservableObject {
 
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
-                status = .failed("Could not reach GitHub releases.")
+                status = .failed(FailureMessage.unreachable)
                 return
             }
 
             let release = try decoder.decode(GitHubRelease.self, from: data)
             guard let htmlURL = URL(string: release.htmlURL) else {
-                status = .failed("Latest release link was invalid.")
+                status = .failed(FailureMessage.invalidLink)
                 return
             }
 
@@ -59,7 +65,7 @@ public final class ReleaseUpdateChecker: ObservableObject {
                 )
             )
         } catch {
-            status = .failed("Update check failed.")
+            status = .failed(FailureMessage.checkFailed)
         }
     }
 }
