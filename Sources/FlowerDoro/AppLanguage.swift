@@ -46,6 +46,7 @@ public struct AppCopy {
     public var flowerBook: String { language == .vietnamese ? "Sách hoa" : "Flower Book" }
     public var collection: String { language == .vietnamese ? "Bộ sưu tập" : "Collection" }
     public var app: String { language == .vietnamese ? "Ứng dụng" : "App" }
+    public var appSettings: String { language == .vietnamese ? "Cài đặt" : "Settings" }
     public var languageLabel: String { language == .vietnamese ? "Ngôn ngữ" : "Language" }
     public var autoCheckUpdates: String { language == .vietnamese ? "Tự kiểm tra cập nhật" : "Auto check updates" }
     public var checkUpdates: String { language == .vietnamese ? "Kiểm tra" : "Check Updates" }

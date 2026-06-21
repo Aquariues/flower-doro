@@ -223,6 +223,7 @@ public struct FlowerDoroRootView: View {
 public struct FlowerDoroDashboardView: View {
     @ObservedObject private var timer: FocusTimerStore
     @StateObject private var updateChecker = ReleaseUpdateChecker()
+    @State private var selectedMainTab: DashboardMainTab = .session
     @State private var selectedDashboardTab: DashboardTab = .garden
     @State private var flowerBookSpreadIndex = 0
     @AppStorage("FlowerDoro.autoCheckUpdates") private var autoCheckUpdates = true
@@ -236,86 +237,23 @@ public struct FlowerDoroDashboardView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Flower-doro")
-                            .font(.title2.weight(.bold))
+                dashboardHeader
 
-                        Text(copy.phaseTitle(timer.phase))
-                            .font(.callout.weight(.semibold))
-                            .foregroundStyle(timer.phase.tint)
-                    }
-
-                    Spacer()
-
-                    Text(timer.remainingTimeText)
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundStyle(timer.phase.tint)
-                        .monospacedDigit()
-
-                    Picker(copy.languageLabel, selection: languageBinding) {
-                        ForEach(AppLanguage.allCases) { language in
-                            Text(language.displayName).tag(language.rawValue)
-                        }
-                    }
-                    .labelsHidden()
-                    .pickerStyle(.menu)
-                    .frame(width: 118)
-                }
-
-                ProgressView(value: timer.progress)
-                    .tint(timer.phase.tint)
-
-                HStack(spacing: 10) {
-                    Button(timer.isRunning ? copy.pause : copy.start) {
-                        timer.toggleRunning()
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    Button(copy.reset) {
-                        timer.reset()
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                Picker(copy.clock, selection: $timer.clockStyle) {
-                    ForEach(ClockStyle.allCases) { style in
-                        Text(copy.clockStyleName(style)).tag(style)
+                Picker(copy.app, selection: $selectedMainTab) {
+                    ForEach(DashboardMainTab.allCases) { tab in
+                        Text(tab.title(copy: copy)).tag(tab)
                     }
                 }
                 .pickerStyle(.segmented)
 
-                Divider()
-
-                statsGrid
-
-                Divider()
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(copy.session)
-                        .font(.headline)
-
-                    HStack {
-                        Text(copy.work)
-                        Spacer()
-                        MinuteField(value: $timer.workMinutes, range: 1...120, copy: copy)
-                    }
-
-                    HStack {
-                        Text(copy.breakLabel)
-                        Spacer()
-                        MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
-                    }
+                switch selectedMainTab {
+                case .session:
+                    sessionSection
+                case .garden:
+                    gardenScreen
+                case .appSettings:
+                    appSection
                 }
-                .disabled(timer.isRunning)
-
-                Divider()
-
-                collectionTabs
-
-                Divider()
-
-                appSection
             }
             .padding()
         }
@@ -331,6 +269,74 @@ public struct FlowerDoroDashboardView: View {
             Task {
                 await updateChecker.checkForUpdates()
             }
+        }
+    }
+
+    private var dashboardHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Flower-doro")
+                    .font(.title2.weight(.bold))
+
+                Text(copy.phaseTitle(timer.phase))
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(timer.phase.tint)
+            }
+
+            Spacer()
+
+            Text(timer.remainingTimeText)
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundStyle(timer.phase.tint)
+                .monospacedDigit()
+        }
+    }
+
+    private var sessionSection: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            ProgressView(value: timer.progress)
+                .tint(timer.phase.tint)
+
+            HStack(spacing: 10) {
+                Button(timer.isRunning ? copy.pause : copy.start) {
+                    timer.toggleRunning()
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button(copy.reset) {
+                    timer.reset()
+                }
+                .buttonStyle(.bordered)
+            }
+
+            Picker(copy.clock, selection: $timer.clockStyle) {
+                ForEach(ClockStyle.allCases) { style in
+                    Text(copy.clockStyleName(style)).tag(style)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            statsGrid
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text(copy.session)
+                    .font(.headline)
+
+                HStack {
+                    Text(copy.work)
+                    Spacer()
+                    MinuteField(value: $timer.workMinutes, range: 1...120, copy: copy)
+                }
+
+                HStack {
+                    Text(copy.breakLabel)
+                    Spacer()
+                    MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
+                }
+            }
+            .disabled(timer.isRunning)
         }
     }
 
@@ -394,6 +400,10 @@ public struct FlowerDoroDashboardView: View {
         }
     }
 
+    private var gardenScreen: some View {
+        collectionTabs
+    }
+
     private var flowerBookSection: some View {
         let unlockedKinds = Set(timer.garden.flowers.map(\.kind))
 
@@ -421,7 +431,7 @@ public struct FlowerDoroDashboardView: View {
 
     private var appSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(copy.app)
+            Text(copy.appSettings)
                 .font(.headline)
 
             Picker(copy.languageLabel, selection: languageBinding) {
@@ -540,6 +550,25 @@ private struct FocusStatCard: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(Color.green.opacity(0.10), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+private enum DashboardMainTab: String, CaseIterable, Identifiable {
+    case session
+    case garden
+    case appSettings
+
+    var id: String { rawValue }
+
+    func title(copy: AppCopy) -> String {
+        switch self {
+        case .session:
+            copy.session
+        case .garden:
+            copy.garden
+        case .appSettings:
+            copy.appSettings
+        }
     }
 }
 
