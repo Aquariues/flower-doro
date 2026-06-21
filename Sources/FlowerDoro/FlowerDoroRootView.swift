@@ -9,6 +9,7 @@ public struct FlowerDoroRootView: View {
     @State private var isGardenPresented = false
     @State private var isSettingsPresented = false
     @State private var isHovering = false
+    @AppStorage("FlowerDoro.language") private var languageCode = AppLanguage.vietnamese.rawValue
 
     @MainActor
     public init() {
@@ -100,13 +101,13 @@ public struct FlowerDoroRootView: View {
                     tint: timer.phase.tint
                 )
                 .frame(width: 36, height: 34)
-                .accessibilityLabel("Flower growing")
+                .accessibilityLabel(copy.flowerGrowingAccessibility)
             }
         }
     }
 
     private var phaseBadge: some View {
-        Text(timer.phase.title)
+        Text(copy.phaseTitle(timer.phase))
             .font(.caption.weight(.bold))
             .foregroundStyle(timer.phase.tint)
             .padding(.horizontal, 10)
@@ -137,7 +138,7 @@ public struct FlowerDoroRootView: View {
                     .offset(x: 4, y: -4)
             }
         }
-        .accessibilityLabel("Open garden")
+        .accessibilityLabel(copy.openGardenAccessibility)
     }
 
     private var compactFlowerBadge: some View {
@@ -154,23 +155,23 @@ public struct FlowerDoroRootView: View {
                     .offset(x: 1, y: -1)
             }
         }
-        .accessibilityLabel("Open garden")
+        .accessibilityLabel(copy.openGardenAccessibility)
     }
     private var settingsPanel: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Session")
+            Text(copy.session)
                 .font(.headline)
 
             HStack {
-                Text("Work")
+                Text(copy.work)
                 Spacer()
-                MinuteField(value: $timer.workMinutes, range: 1...120)
+                MinuteField(value: $timer.workMinutes, range: 1...120, copy: copy)
             }
 
             HStack {
-                Text("Break")
+                Text(copy.breakLabel)
                 Spacer()
-                MinuteField(value: $timer.breakMinutes, range: 1...60)
+                MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
             }
         }
         .disabled(timer.isRunning)
@@ -181,7 +182,7 @@ public struct FlowerDoroRootView: View {
     private var gardenPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text(timer.gardenTitle)
+                Text(copy.gardenTitle(userName: timer.garden.userName))
                     .font(.headline)
 
                 Spacer()
@@ -193,14 +194,14 @@ public struct FlowerDoroRootView: View {
             }
 
             if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
-                Text("Finish a focus session to grow your first flower.")
+                Text(copy.finishFirstFlower)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 18)
             } else {
                 ScrollView {
-                    GardenBedView(flowers: timer.garden.flowers, activeKind: timer.activeFlowerKind, activeStage: timer.focusGrowthStage, activeProgress: timer.focusGrowthProgress)
+                    GardenBedView(flowers: timer.garden.flowers, activeKind: timer.activeFlowerKind, activeStage: timer.focusGrowthStage, activeProgress: timer.focusGrowthProgress, copy: copy)
                         .padding(.vertical, 2)
                 }
                 .frame(maxHeight: 300)
@@ -208,6 +209,14 @@ public struct FlowerDoroRootView: View {
         }
         .padding()
         .frame(width: 330)
+    }
+
+    private var language: AppLanguage {
+        AppLanguage(rawValue: languageCode) ?? .vietnamese
+    }
+
+    private var copy: AppCopy {
+        AppCopy(language: language)
     }
 }
 
@@ -217,6 +226,7 @@ public struct FlowerDoroDashboardView: View {
     @State private var selectedDashboardTab: DashboardTab = .garden
     @State private var flowerBookSpreadIndex = 0
     @AppStorage("FlowerDoro.autoCheckUpdates") private var autoCheckUpdates = true
+    @AppStorage("FlowerDoro.language") private var languageCode = AppLanguage.vietnamese.rawValue
     @Environment(\.openURL) private var openURL
 
     public init(timer: FocusTimerStore) {
@@ -231,7 +241,7 @@ public struct FlowerDoroDashboardView: View {
                         Text("Flower-doro")
                             .font(.title2.weight(.bold))
 
-                        Text(timer.phase.title)
+                        Text(copy.phaseTitle(timer.phase))
                             .font(.callout.weight(.semibold))
                             .foregroundStyle(timer.phase.tint)
                     }
@@ -248,20 +258,20 @@ public struct FlowerDoroDashboardView: View {
                     .tint(timer.phase.tint)
 
                 HStack(spacing: 10) {
-                    Button(timer.isRunning ? "Pause" : "Start") {
+                    Button(timer.isRunning ? copy.pause : copy.start) {
                         timer.toggleRunning()
                     }
                     .buttonStyle(.borderedProminent)
 
-                    Button("Reset") {
+                    Button(copy.reset) {
                         timer.reset()
                     }
                     .buttonStyle(.bordered)
                 }
 
-                Picker("Clock", selection: $timer.clockStyle) {
+                Picker(copy.clock, selection: $timer.clockStyle) {
                     ForEach(ClockStyle.allCases) { style in
-                        Text(style.displayName).tag(style)
+                        Text(copy.clockStyleName(style)).tag(style)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -273,19 +283,19 @@ public struct FlowerDoroDashboardView: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Session")
+                    Text(copy.session)
                         .font(.headline)
 
                     HStack {
-                        Text("Work")
+                        Text(copy.work)
                         Spacer()
-                        MinuteField(value: $timer.workMinutes, range: 1...120)
+                        MinuteField(value: $timer.workMinutes, range: 1...120, copy: copy)
                     }
 
                     HStack {
-                        Text("Break")
+                        Text(copy.breakLabel)
                         Spacer()
-                        MinuteField(value: $timer.breakMinutes, range: 1...60)
+                        MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
                     }
                 }
                 .disabled(timer.isRunning)
@@ -319,28 +329,28 @@ public struct FlowerDoroDashboardView: View {
         let stats = timer.stats
 
         return HStack(spacing: 8) {
-            FocusStatCard(title: "Today", value: stats.today)
-            FocusStatCard(title: "Week", value: stats.thisWeek)
-            FocusStatCard(title: "Month", value: stats.thisMonth)
+            FocusStatCard(title: copy.today, value: stats.today)
+            FocusStatCard(title: copy.week, value: stats.thisWeek)
+            FocusStatCard(title: copy.month, value: stats.thisMonth)
         }
     }
 
     private var gardenSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(timer.gardenTitle)
+                Text(copy.gardenTitle(userName: timer.garden.userName))
                     .font(.headline)
 
                 Spacer()
 
-                Text("\(timer.garden.flowers.count) flowers")
+                Text("\(timer.garden.flowers.count) \(copy.flowers)")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
 
             if timer.garden.flowers.isEmpty && timer.activeFlowerKind == nil {
-                Text("Finish a focus session to grow your first flower.")
+                Text(copy.finishFirstFlower)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -350,7 +360,8 @@ public struct FlowerDoroDashboardView: View {
                     flowers: timer.garden.flowers,
                     activeKind: timer.activeFlowerKind,
                     activeStage: timer.focusGrowthStage,
-                    activeProgress: timer.focusGrowthProgress
+                    activeProgress: timer.focusGrowthProgress,
+                    copy: copy
                 )
             }
         }
@@ -358,9 +369,9 @@ public struct FlowerDoroDashboardView: View {
 
     private var collectionTabs: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Collection", selection: $selectedDashboardTab) {
+            Picker(copy.collection, selection: $selectedDashboardTab) {
                 ForEach(DashboardTab.allCases) { tab in
-                    Text(tab.title).tag(tab)
+                    Text(tab.title(copy: copy)).tag(tab)
                 }
             }
             .pickerStyle(.segmented)
@@ -379,7 +390,7 @@ public struct FlowerDoroDashboardView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Flower Book")
+                Text(copy.flowerBook)
                     .font(.headline)
 
                 Spacer()
@@ -393,17 +404,25 @@ public struct FlowerDoroDashboardView: View {
             FlowerBookSpreadView(
                 flowers: timer.garden.flowers,
                 unlockedKinds: unlockedKinds,
-                spreadIndex: $flowerBookSpreadIndex
+                spreadIndex: $flowerBookSpreadIndex,
+                copy: copy
             )
         }
     }
 
     private var appSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("App")
+            Text(copy.app)
                 .font(.headline)
 
-            Toggle("Auto check updates", isOn: $autoCheckUpdates)
+            Picker(copy.languageLabel, selection: languageBinding) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.displayName).tag(language.rawValue)
+                }
+            }
+            .pickerStyle(.menu)
+
+            Toggle(copy.autoCheckUpdates, isOn: $autoCheckUpdates)
 
             updateStatusView
 
@@ -413,7 +432,7 @@ public struct FlowerDoroDashboardView: View {
                         await updateChecker.checkForUpdates()
                     }
                 } label: {
-                    Label("Check Updates", systemImage: "arrow.triangle.2.circlepath")
+                    Label(copy.checkUpdates, systemImage: "arrow.triangle.2.circlepath")
                 }
                 .disabled(updateChecker.status == .checking)
 
@@ -421,7 +440,7 @@ public struct FlowerDoroDashboardView: View {
                     Button {
                         openURL(releaseURL)
                     } label: {
-                        Label("Open Release", systemImage: "arrow.down.circle")
+                        Label(copy.openRelease, systemImage: "arrow.down.circle")
                     }
                 }
 
@@ -431,7 +450,7 @@ public struct FlowerDoroDashboardView: View {
                 Button(role: .destructive) {
                     NSApplication.shared.terminate(nil)
                 } label: {
-                    Label("Quit", systemImage: "power")
+                    Label(copy.quit, systemImage: "power")
                 }
                 #endif
             }
@@ -443,28 +462,28 @@ public struct FlowerDoroDashboardView: View {
     private var updateStatusView: some View {
         switch updateChecker.status {
         case .idle:
-            Text("Updates use GitHub releases.")
+            Text(copy.updatesUseGitHub)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .checking:
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Checking GitHub releases...")
+                Text(copy.checkingReleases)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         case .available(let release):
-            Text("Latest: \(release.name)")
+            Text(copy.latestRelease(release.name))
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.green)
                 .lineLimit(1)
         case .unavailable:
-            Text("You are up to date.")
+            Text(copy.upToDate)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         case .failed(let message):
-            Text(message)
+            Text(copy.releaseFailureMessage(message))
                 .font(.caption)
                 .foregroundStyle(.red)
         }
@@ -475,6 +494,22 @@ public struct FlowerDoroDashboardView: View {
             release.htmlURL
         } else {
             URL(string: "https://github.com/Aquariues/flower-doro/releases/latest")
+        }
+    }
+
+    private var language: AppLanguage {
+        AppLanguage(rawValue: languageCode) ?? .vietnamese
+    }
+
+    private var copy: AppCopy {
+        AppCopy(language: language)
+    }
+
+    private var languageBinding: Binding<String> {
+        Binding {
+            languageCode
+        } set: { newValue in
+            languageCode = AppLanguage(rawValue: newValue)?.rawValue ?? AppLanguage.vietnamese.rawValue
         }
     }
 }
@@ -505,12 +540,12 @@ private enum DashboardTab: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(copy: AppCopy) -> String {
         switch self {
         case .garden:
-            "Garden"
+            copy.garden
         case .flowerBook:
-            "Flower Book"
+            copy.flowerBook
         }
     }
 }
@@ -519,6 +554,7 @@ private struct FlowerBookSpreadView: View {
     let flowers: [Flower]
     let unlockedKinds: Set<FlowerKind>
     @Binding var spreadIndex: Int
+    let copy: AppCopy
 
     private var spreadCount: Int {
         Int(ceil(Double(FlowerKind.allCases.count) / 2))
@@ -543,7 +579,8 @@ private struct FlowerBookSpreadView: View {
                         FlowerBookPageView(
                             kind: kind,
                             isUnlocked: unlockedKinds.contains(kind),
-                            count: flowers.filter { $0.kind == kind }.count
+                            count: flowers.filter { $0.kind == kind }.count,
+                            copy: copy
                         )
                     }
 
@@ -575,11 +612,11 @@ private struct FlowerBookSpreadView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(spreadIndex == 0)
-                .help("Previous page")
+                .help(copy.previousPage)
 
                 Spacer()
 
-                Text("Page \(spreadIndex + 1) / \(spreadCount)")
+                Text(copy.page(spreadIndex + 1, spreadCount))
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
@@ -593,7 +630,7 @@ private struct FlowerBookSpreadView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(spreadIndex >= spreadCount - 1)
-                .help("Next page")
+                .help(copy.nextPage)
             }
         }
         .onAppear {
@@ -606,19 +643,22 @@ private struct FlowerBookPageView: View {
     let kind: FlowerKind
     let isUnlocked: Bool
     let count: Int
+    let copy: AppCopy
 
     var body: some View {
+        let info = copy.flowerInfo(kind)
+
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(isUnlocked ? kind.displayName : "????")
+                    Text(isUnlocked ? info.name : "????")
                         .font(.headline.weight(.bold))
                         .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.18, green: 0.18, blue: 0.18))
                         .shadow(color: .black.opacity(isUnlocked ? 0.24 : 0.12), radius: 0.6, x: 0, y: 0.8)
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
-                    Text(isUnlocked ? "\(count) collected" : "Unknown flower")
+                    Text(isUnlocked ? copy.collectedCount(count) : copy.unknownFlower)
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(isUnlocked ? kind.tint : Color(red: 0.34, green: 0.34, blue: 0.34))
                         .shadow(color: .black.opacity(isUnlocked ? 0.20 : 0.10), radius: 0.5, x: 0, y: 0.7)
@@ -649,7 +689,7 @@ private struct FlowerBookPageView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Text(isUnlocked ? kind.shortDescription : "Keep focusing to reveal this page.")
+            Text(isUnlocked ? info.shortDescription : copy.lockedFlowerPrompt)
                 .font(.caption)
                 .foregroundStyle(Color(red: 0.12, green: 0.12, blue: 0.12))
                 .lineLimit(3)
@@ -681,7 +721,7 @@ private struct FlowerBookPageView: View {
                 .fill(.black.opacity(0.05))
                 .frame(width: 1)
         }
-        .accessibilityLabel(isUnlocked ? "\(kind.displayName) flower book page" : "Locked flower book page")
+        .accessibilityLabel(copy.flowerBookPageAccessibility(info.name, unlocked: isUnlocked))
     }
 
     private var pageBackground: some ShapeStyle {
@@ -697,7 +737,7 @@ private struct FlowerBookPageView: View {
 
     private var displayFacts: [String] {
         if isUnlocked {
-            Array(kind.facts.prefix(2))
+            Array(copy.flowerInfo(kind).facts.prefix(2))
         } else {
             ["????", "????"]
         }
@@ -724,6 +764,7 @@ private struct BlankBookPageView: View {
 private struct MinuteField: View {
     @Binding var value: Int
     let range: ClosedRange<Int>
+    let copy: AppCopy
 
     var body: some View {
         HStack(spacing: 6) {
@@ -733,7 +774,7 @@ private struct MinuteField: View {
                 .monospacedDigit()
                 .frame(width: 58)
 
-            Text("min")
+            Text(copy.minuteShort)
                 .foregroundStyle(.secondary)
         }
     }
@@ -881,6 +922,7 @@ private struct GardenBedView: View {
     let activeKind: FlowerKind?
     let activeStage: FlowerGrowthStage
     let activeProgress: Double
+    let copy: AppCopy
 
     private var groupedFlowers: [(kind: FlowerKind, count: Int, minutes: Int)] {
         FlowerKind.allCases.compactMap { kind in
@@ -926,7 +968,7 @@ private struct GardenBedView: View {
                         .frame(height: 52)
                     }
                     .overlay(alignment: .topLeading) {
-                        Text("\(flowers.count) blooms")
+                        Text("\(flowers.count) \(copy.blooms)")
                             .font(.caption2.weight(.bold))
                             .foregroundStyle(.white.opacity(0.86))
                             .monospacedDigit()
@@ -939,11 +981,11 @@ private struct GardenBedView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .bottom, spacing: 10) {
                         if let activeKind {
-                            GrowingPlotView(kind: activeKind, stage: activeStage, progress: activeProgress)
+                            GrowingPlotView(kind: activeKind, stage: activeStage, progress: activeProgress, copy: copy)
                         }
 
                         ForEach(groupedFlowers, id: \.kind) { plot in
-                            GardenPlotView(kind: plot.kind, count: plot.count, minutes: plot.minutes)
+                            GardenPlotView(kind: plot.kind, count: plot.count, minutes: plot.minutes, copy: copy)
                         }
                     }
                     .padding(.horizontal, 12)
@@ -955,14 +997,14 @@ private struct GardenBedView: View {
 
             if !recentFlowers.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Recent blooms")
+                    Text(copy.recentBlooms)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(recentFlowers) { flower in
-                                RecentBloomPill(flower: flower)
+                                RecentBloomPill(flower: flower, copy: copy)
                             }
                         }
                     }
@@ -976,6 +1018,7 @@ private struct GardenPlotView: View {
     let kind: FlowerKind
     let count: Int
     let minutes: Int
+    let copy: AppCopy
 
     private var flowerSlots: Int {
         min(max(count, 1), 5)
@@ -1005,7 +1048,7 @@ private struct GardenPlotView: View {
             }
             .frame(height: 48)
 
-            Text(kind.displayName)
+            Text(copy.flowerInfo(kind).name)
                 .font(.caption2.weight(.bold))
                 .lineLimit(1)
 
@@ -1019,7 +1062,7 @@ private struct GardenPlotView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Text("\(minutes)m")
+            Text(copy.focusMinutes(minutes))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -1041,13 +1084,14 @@ private struct GrowingPlotView: View {
     let kind: FlowerKind
     let stage: FlowerGrowthStage
     let progress: Double
+    let copy: AppCopy
 
     var body: some View {
         VStack(spacing: 6) {
             GrowingFlowerView(kind: kind, stage: stage, progress: progress, tint: .green)
                 .frame(width: 42, height: 54)
 
-            Text("Growing")
+            Text(copy.growing)
                 .font(.caption2.weight(.bold))
                 .foregroundStyle(.green)
 
@@ -1067,6 +1111,7 @@ private struct GrowingPlotView: View {
 
 private struct RecentBloomPill: View {
     let flower: Flower
+    let copy: AppCopy
 
     var body: some View {
         HStack(spacing: 6) {
@@ -1074,7 +1119,7 @@ private struct RecentBloomPill: View {
                 .frame(width: 22, height: 22)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(flower.kind.displayName)
+                Text(copy.flowerInfo(flower.kind).name)
                     .font(.caption2.weight(.bold))
                     .lineLimit(1)
 
@@ -1087,7 +1132,7 @@ private struct RecentBloomPill: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .accessibilityLabel("\(flower.kind.displayName) earned from \(flower.focusMinutes) minutes of focus")
+        .accessibilityLabel(copy.flowerRewardAccessibility(copy.flowerInfo(flower.kind).name, minutes: flower.focusMinutes))
     }
 
     private static let dateFormatter: DateFormatter = {
