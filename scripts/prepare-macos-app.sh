@@ -4,8 +4,8 @@ set -euo pipefail
 CONFIGURATION="${1:-debug}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BIN_PATH="$(swift build --configuration "$CONFIGURATION" --show-bin-path)"
-APP_PATH="$BIN_PATH/FlowerDoroMac.app"
-EXECUTABLE_PATH="$BIN_PATH/FlowerDoroMac"
+APP_PATH="$BIN_PATH/FlowerDoro.app"
+EXECUTABLE_PATH="$BIN_PATH/FlowerDoroApp"
 RESOURCE_BUNDLE_PATH="$BIN_PATH/FlowerDoro_FlowerDoro.bundle"
 ICON_PATH="$ROOT_DIR/Assets/AppIcon/FlowerDoro.icns"
 
@@ -41,7 +41,7 @@ plist_set_bool() {
     || /usr/libexec/PlistBuddy -c "Add :$key bool $value" "$INFO_PLIST" >/dev/null
 }
 
-cp "$EXECUTABLE_PATH" "$APP_PATH/Contents/MacOS/FlowerDoroMac"
+cp "$EXECUTABLE_PATH" "$APP_PATH/Contents/MacOS/FlowerDoro"
 cp "$ICON_PATH" "$APP_PATH/Contents/Resources/FlowerDoro.icns"
 
 if [[ -d "$RESOURCE_BUNDLE_PATH" ]]; then
@@ -49,9 +49,10 @@ if [[ -d "$RESOURCE_BUNDLE_PATH" ]]; then
   cp -R "$RESOURCE_BUNDLE_PATH" "$APP_PATH/FlowerDoro_FlowerDoro.bundle"
 fi
 
-plist_set_string CFBundleExecutable FlowerDoroMac
+plist_set_string CFBundleExecutable FlowerDoro
 plist_set_string CFBundleIdentifier com.aquariues.flowerdoro.mac.preview
 plist_set_string CFBundleName FlowerDoro
+plist_set_string CFBundleDisplayName FlowerDoro
 plist_set_string CFBundlePackageType APPL
 plist_set_string CFBundleShortVersionString 0.1.0
 plist_set_string CFBundleVersion 1

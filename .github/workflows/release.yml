@@ -30,7 +30,7 @@ jobs:
         run: swift build
 
       - name: Build macOS app product
-        run: swift build --product FlowerDoroMac
+        run: swift build --product FlowerDoroApp
 
       - name: Run tests
         run: swift test
@@ -43,11 +43,11 @@ jobs:
 
       - name: Build release archive
         run: |
-          swift build --configuration release --product FlowerDoroMac
+          swift build --configuration release --product FlowerDoroApp
           app_path="$(scripts/prepare-macos-app.sh release)"
           mkdir -p dist
-          cp -R "$app_path" dist/FlowerDoroMac.app
-          ditto -c -k --keepParent dist/FlowerDoroMac.app FlowerDoroMac-${{ steps.tag.outputs.tag }}.zip
+          cp -R "$app_path" dist/FlowerDoro.app
+          ditto -c -k --keepParent dist/FlowerDoro.app FlowerDoro-${{ steps.tag.outputs.tag }}.zip
 
       - name: Publish GitHub release
         env:
@@ -55,7 +55,7 @@ jobs:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           gh release create "$TAG" \
-            "FlowerDoroMac-${TAG}.zip" \
+            "FlowerDoro-${TAG}.zip" \
             --target "$GITHUB_SHA" \
-            --title "Flower-doro ${TAG}" \
+            --title "FlowerDoro ${TAG}" \
             --generate-notes

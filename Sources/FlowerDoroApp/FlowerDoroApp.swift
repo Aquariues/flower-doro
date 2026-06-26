@@ -2,7 +2,7 @@ import FlowerDoro
 import SwiftUI
 
 @main
-struct FlowerDoroMacApp: App {
+struct FlowerDoroApp: App {
     @StateObject private var timer = FocusTimerStore()
 
     init() {

@@ -279,7 +279,7 @@ public struct FlowerDoroDashboardView: View {
     private var dashboardHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Flower-doro")
+                Text("FlowerDoro")
                     .font(.title3.weight(.bold))
                     .lineLimit(1)
 

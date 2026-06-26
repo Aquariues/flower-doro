@@ -42,7 +42,7 @@ public final class ReleaseUpdateChecker: ObservableObject {
         do {
             var request = URLRequest(url: latestReleaseURL)
             request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-            request.setValue("FlowerDoroMac", forHTTPHeaderField: "User-Agent")
+            request.setValue("FlowerDoro", forHTTPHeaderField: "User-Agent")
 
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {

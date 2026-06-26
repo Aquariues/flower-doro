@@ -135,7 +135,7 @@ public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
             facts: [
                 profile.englishNote,
                 "Its varieties can differ widely in color, size, scent, or blooming season.",
-                "In Flower-doro, this bloom adds another collectible shape to the garden."
+                "In FlowerDoro, this bloom adds another collectible shape to the garden."
             ]
         )
     }
@@ -147,7 +147,7 @@ public enum FlowerKind: String, CaseIterable, Codable, Identifiable, Equatable {
             facts: [
                 profile.vietnameseNote,
                 "Các giống khác nhau có thể khác về màu sắc, kích thước, hương thơm hoặc mùa nở.",
-                "Trong Flower-doro, bông hoa này thêm một dáng sưu tầm mới cho khu vườn."
+                "Trong FlowerDoro, bông hoa này thêm một dáng sưu tầm mới cho khu vườn."
             ]
         )
     }
