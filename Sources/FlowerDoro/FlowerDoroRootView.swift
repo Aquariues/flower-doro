@@ -1241,8 +1241,35 @@ private struct FlowerAssetImage: View {
     #endif
 
     private static func imageURL(kind: FlowerKind) -> URL? {
-        Bundle.module.url(forResource: kind.assetName, withExtension: "png")
-            ?? Bundle.module.url(forResource: kind.assetName, withExtension: "png", subdirectory: "Flowers")
+        for bundle in candidateResourceBundles() {
+            if let url = bundle.url(forResource: kind.assetName, withExtension: "png") {
+                return url
+            }
+
+            if let url = bundle.url(forResource: kind.assetName, withExtension: "png", subdirectory: "Flowers") {
+                return url
+            }
+        }
+
+        return nil
+    }
+
+    private static func candidateResourceBundles() -> [Bundle] {
+        var bundles: [Bundle] = []
+        let bundleName = "FlowerDoro_FlowerDoro.bundle"
+        let candidates = [
+            Bundle.main.resourceURL?.appendingPathComponent(bundleName),
+            Bundle.main.bundleURL.appendingPathComponent(bundleName),
+            Bundle.main.bundleURL.deletingLastPathComponent().appendingPathComponent(bundleName)
+        ]
+
+        for candidate in candidates.compactMap(\.self) {
+            if let bundle = Bundle(url: candidate), !bundles.contains(bundle) {
+                bundles.append(bundle)
+            }
+        }
+
+        return bundles
     }
 }
 
