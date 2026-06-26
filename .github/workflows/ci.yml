@@ -33,13 +33,15 @@ jobs:
         run: swift build
 
       - name: Build macOS app product
-        run: swift build --product FlowerDoroMac
+        run: swift build --product FlowerDoroApp
 
       - name: Prepare macOS app bundle
         run: |
           app_path="$(scripts/prepare-macos-app.sh debug)"
           test -f "$app_path/Contents/Resources/FlowerDoro.icns"
           test "$(plutil -extract CFBundleIconFile raw "$app_path/Contents/Info.plist")" = "FlowerDoro"
+          test "$(plutil -extract CFBundleExecutable raw "$app_path/Contents/Info.plist")" = "FlowerDoro"
+          test "$(basename "$app_path")" = "FlowerDoro.app"
 
       - name: Run tests
         run: swift test
