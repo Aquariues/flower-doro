@@ -1219,9 +1219,7 @@ private struct FlowerAssetImage: View {
     }
 
     private var fallback: some View {
-        Image(systemName: kind.symbolName)
-            .font(.system(size: 28, weight: .semibold))
-            .foregroundStyle(kind.tint)
+        ProceduralFlowerIcon(kind: kind)
     }
 
     #if os(macOS)
@@ -1245,6 +1243,51 @@ private struct FlowerAssetImage: View {
     private static func imageURL(kind: FlowerKind) -> URL? {
         Bundle.module.url(forResource: kind.assetName, withExtension: "png")
             ?? Bundle.module.url(forResource: kind.assetName, withExtension: "png", subdirectory: "Flowers")
+    }
+}
+
+private struct ProceduralFlowerIcon: View {
+    let kind: FlowerKind
+
+    private var petalCount: Int {
+        6 + (kind.stableIndex % 5)
+    }
+
+    private var centerColor: Color {
+        kind.stableIndex.isMultiple(of: 3) ? .yellow : Color(red: 0.38, green: 0.22, blue: 0.12)
+    }
+
+    var body: some View {
+        GeometryReader { proxy in
+            let side = min(proxy.size.width, proxy.size.height)
+            let petalWidth = side * 0.26
+            let petalHeight = side * 0.42
+
+            ZStack {
+                Capsule()
+                    .fill(Color(red: 0.22, green: 0.58, blue: 0.32).opacity(0.82))
+                    .frame(width: side * 0.08, height: side * 0.52)
+                    .offset(y: side * 0.18)
+
+                ForEach(0..<petalCount, id: \.self) { index in
+                    Capsule()
+                        .fill(kind.tint)
+                        .frame(width: petalWidth, height: petalHeight)
+                        .offset(y: -side * 0.20)
+                        .rotationEffect(.degrees(Double(index) / Double(petalCount) * 360))
+                        .shadow(color: kind.tint.opacity(0.22), radius: 1, y: 0.6)
+                }
+
+                Circle()
+                    .fill(centerColor)
+                    .frame(width: side * 0.24, height: side * 0.24)
+                    .overlay {
+                        Circle()
+                            .stroke(.white.opacity(0.38), lineWidth: max(side * 0.025, 1))
+                    }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
     }
 }
 
@@ -1302,6 +1345,10 @@ private extension FocusPhase {
 }
 
 private extension FlowerKind {
+    var stableIndex: Int {
+        Self.allCases.firstIndex(of: self) ?? 0
+    }
+
     var tint: Color {
         switch self {
         case .daisy:
@@ -1324,6 +1371,21 @@ private extension FlowerKind {
             Color(red: 0.95, green: 0.22, blue: 0.12)
         case .hydrangea:
             Color(red: 0.36, green: 0.55, blue: 1)
+        default:
+            Self.palette[stableIndex % Self.palette.count]
         }
     }
+
+    private static let palette: [Color] = [
+        Color(red: 0.95, green: 0.28, blue: 0.38),
+        Color(red: 0.96, green: 0.58, blue: 0.22),
+        Color(red: 0.94, green: 0.76, blue: 0.18),
+        Color(red: 0.26, green: 0.72, blue: 0.42),
+        Color(red: 0.18, green: 0.62, blue: 0.78),
+        Color(red: 0.38, green: 0.50, blue: 0.94),
+        Color(red: 0.60, green: 0.38, blue: 0.92),
+        Color(red: 0.88, green: 0.34, blue: 0.72),
+        Color(red: 0.90, green: 0.44, blue: 0.52),
+        Color(red: 0.74, green: 0.52, blue: 0.24)
+    ]
 }

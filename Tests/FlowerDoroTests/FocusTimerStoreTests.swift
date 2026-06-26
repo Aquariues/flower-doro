@@ -39,4 +39,15 @@ final class FocusTimerStoreTests: XCTestCase {
         XCTAssertEqual(store.remainingSeconds, 45 * 60)
         XCTAssertFalse(store.isRunning)
     }
+
+    func testFlowerLibraryHasOneHundredLocalizedFlowers() {
+        XCTAssertEqual(FlowerKind.allCases.count, 100)
+
+        for kind in FlowerKind.allCases {
+            XCTAssertFalse(kind.englishInfo.name.isEmpty)
+            XCTAssertFalse(kind.vietnameseInfo.name.isEmpty)
+            XCTAssertEqual(kind.englishInfo.facts.count, 3)
+            XCTAssertEqual(kind.vietnameseInfo.facts.count, 3)
+        }
+    }
 }
