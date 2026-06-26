@@ -235,29 +235,21 @@ public struct FlowerDoroDashboardView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                dashboardHeader
+        VStack(alignment: .leading, spacing: 12) {
+            dashboardHeader
 
-                Picker(copy.app, selection: $selectedMainTab) {
-                    ForEach(DashboardMainTab.allCases) { tab in
-                        Text(tab.title(copy: copy)).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                switch selectedMainTab {
-                case .session:
-                    sessionSection
-                case .garden:
-                    gardenScreen
-                case .appSettings:
-                    appSection
+            Picker(copy.app, selection: $selectedMainTab) {
+                ForEach(DashboardMainTab.allCases) { tab in
+                    Text(tab.title(copy: copy)).tag(tab)
                 }
             }
-            .padding()
+            .pickerStyle(.segmented)
+
+            currentTabContent
         }
-        .frame(width: 430, height: 700)
+        .padding(14)
+        .frame(width: 410)
+        .fixedSize(horizontal: false, vertical: true)
         .background(.regularMaterial)
         .task {
             if autoCheckUpdates {
@@ -272,28 +264,44 @@ public struct FlowerDoroDashboardView: View {
         }
     }
 
+    @ViewBuilder
+    private var currentTabContent: some View {
+        switch selectedMainTab {
+        case .session:
+            sessionSection
+        case .garden:
+            gardenScreen
+        case .appSettings:
+            appSection
+        }
+    }
+
     private var dashboardHeader: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Flower-doro")
-                    .font(.title2.weight(.bold))
+                    .font(.title3.weight(.bold))
+                    .lineLimit(1)
 
                 Text(copy.phaseTitle(timer.phase))
-                    .font(.callout.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(timer.phase.tint)
+                    .lineLimit(1)
             }
 
             Spacer()
 
             Text(timer.remainingTimeText)
-                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .font(.system(size: 32, weight: .bold, design: .rounded))
                 .foregroundStyle(timer.phase.tint)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
         }
     }
 
     private var sessionSection: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 12) {
             ProgressView(value: timer.progress)
                 .tint(timer.phase.tint)
 
@@ -320,7 +328,7 @@ public struct FlowerDoroDashboardView: View {
 
             Divider()
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 9) {
                 Text(copy.session)
                     .font(.headline)
 
@@ -351,7 +359,7 @@ public struct FlowerDoroDashboardView: View {
     }
 
     private var gardenSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(copy.gardenTitle(userName: timer.garden.userName))
                     .font(.headline)
@@ -383,7 +391,7 @@ public struct FlowerDoroDashboardView: View {
     }
 
     private var collectionTabs: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Picker(copy.collection, selection: $selectedDashboardTab) {
                 ForEach(DashboardTab.allCases) { tab in
                     Text(tab.title(copy: copy)).tag(tab)
@@ -401,13 +409,16 @@ public struct FlowerDoroDashboardView: View {
     }
 
     private var gardenScreen: some View {
-        collectionTabs
+        ScrollView {
+            collectionTabs
+        }
+        .frame(maxHeight: selectedDashboardTab == .flowerBook ? 392 : 330)
     }
 
     private var flowerBookSection: some View {
         let unlockedKinds = Set(timer.garden.flowers.map(\.kind))
 
-        return VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(copy.flowerBook)
                     .font(.headline)
@@ -430,7 +441,7 @@ public struct FlowerDoroDashboardView: View {
     }
 
     private var appSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text(copy.appSettings)
                 .font(.headline)
 
@@ -445,13 +456,14 @@ public struct FlowerDoroDashboardView: View {
 
             updateStatusView
 
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Button {
                     Task {
                         await updateChecker.checkForUpdates()
                     }
                 } label: {
                     Label(copy.checkUpdates, systemImage: "arrow.triangle.2.circlepath")
+                        .lineLimit(1)
                 }
                 .disabled(updateChecker.status == .checking)
 
@@ -460,6 +472,7 @@ public struct FlowerDoroDashboardView: View {
                         openURL(releaseURL)
                     } label: {
                         Label(copy.openRelease, systemImage: "arrow.down.circle")
+                            .lineLimit(1)
                     }
                 }
 
@@ -470,6 +483,7 @@ public struct FlowerDoroDashboardView: View {
                     NSApplication.shared.terminate(nil)
                 } label: {
                     Label(copy.quit, systemImage: "power")
+                        .lineLimit(1)
                 }
                 #endif
             }
