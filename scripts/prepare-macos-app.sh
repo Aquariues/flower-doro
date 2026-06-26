@@ -46,7 +46,8 @@ cp "$ICON_PATH" "$APP_PATH/Contents/Resources/FlowerDoro.icns"
 
 if [[ -d "$RESOURCE_BUNDLE_PATH" ]]; then
   rm -rf "$APP_PATH/FlowerDoro_FlowerDoro.bundle"
-  cp -R "$RESOURCE_BUNDLE_PATH" "$APP_PATH/FlowerDoro_FlowerDoro.bundle"
+  rm -rf "$APP_PATH/Contents/Resources/FlowerDoro_FlowerDoro.bundle"
+  cp -R "$RESOURCE_BUNDLE_PATH" "$APP_PATH/Contents/Resources/FlowerDoro_FlowerDoro.bundle"
 fi
 
 plist_set_string CFBundleExecutable FlowerDoro
@@ -59,5 +60,8 @@ plist_set_string CFBundleVersion 1
 plist_set_string LSMinimumSystemVersion 14.0
 plist_set_string CFBundleIconFile FlowerDoro
 plist_set_bool NSHighResolutionCapable true
+
+codesign --force --deep --sign - "$APP_PATH" >/dev/null
+codesign --verify --deep --strict --verbose=2 "$APP_PATH" >/dev/null
 
 echo "$APP_PATH"
