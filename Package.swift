@@ -14,8 +14,8 @@ let package = Package(
             targets: ["FlowerDoro"]
         ),
         .executable(
-            name: "FlowerDoroMac",
-            targets: ["FlowerDoroMac"]
+            name: "FlowerDoroApp",
+            targets: ["FlowerDoroApp"]
         )
     ],
     targets: [
@@ -26,7 +26,7 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "FlowerDoroMac",
+            name: "FlowerDoroApp",
             dependencies: ["FlowerDoro"]
         ),
         .testTarget(

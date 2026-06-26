@@ -10,5 +10,6 @@
 ## Checks
 
 - [ ] `swift build`
-- [ ] `swift build --product FlowerDoroMac`
+- [ ] `swift build --product FlowerDoroApp`
+- [ ] `scripts/prepare-macos-app.sh debug` creates `FlowerDoro.app`
 - [ ] `swift test`
