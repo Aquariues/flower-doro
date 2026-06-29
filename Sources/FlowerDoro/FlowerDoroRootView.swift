@@ -1276,45 +1276,492 @@ private struct FlowerAssetImage: View {
 private struct ProceduralFlowerIcon: View {
     let kind: FlowerKind
 
-    private var petalCount: Int {
-        6 + (kind.stableIndex % 5)
+    var body: some View {
+        GeometryReader { proxy in
+            let side = min(proxy.size.width, proxy.size.height)
+
+            ZStack {
+                switch kind.visualStyle {
+                case .radial:
+                    radialFlower(side: side, petals: 7 + kind.stableIndex % 5, petalScale: 1)
+                case .ruffled:
+                    radialFlower(side: side, petals: 14, petalScale: 0.76)
+                    radialFlower(side: side * 0.72, petals: 10, petalScale: 0.62)
+                case .cup:
+                    cupFlower(side: side)
+                case .bell:
+                    bellCluster(side: side)
+                case .spike:
+                    spikeFlower(side: side)
+                case .cluster:
+                    clusteredFlower(side: side)
+                case .vine:
+                    vineFlower(side: side)
+                case .pansy:
+                    pansyFlower(side: side)
+                case .pea:
+                    sweetPeaFlower(side: side)
+                case .trumpet:
+                    trumpetFlower(side: side)
+                case .orchid:
+                    orchidFlower(side: side)
+                case .tropical:
+                    tropicalFlower(side: side)
+                case .lotus:
+                    lotusFlower(side: side)
+                case .sphere:
+                    sphereFlower(side: side)
+                case .heart:
+                    heartFlower(side: side)
+                case .star:
+                    starFlower(side: side)
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+
+    private var stemColor: Color {
+        Color(red: 0.22, green: 0.58, blue: 0.32)
     }
 
     private var centerColor: Color {
         kind.stableIndex.isMultiple(of: 3) ? .yellow : Color(red: 0.38, green: 0.22, blue: 0.12)
     }
 
-    var body: some View {
-        GeometryReader { proxy in
-            let side = min(proxy.size.width, proxy.size.height)
-            let petalWidth = side * 0.26
-            let petalHeight = side * 0.42
+    private var accentColor: Color {
+        Self.accentPalette[kind.stableIndex % Self.accentPalette.count]
+    }
 
-            ZStack {
-                Capsule()
-                    .fill(Color(red: 0.22, green: 0.58, blue: 0.32).opacity(0.82))
-                    .frame(width: side * 0.08, height: side * 0.52)
-                    .offset(y: side * 0.18)
+    private static let accentPalette: [Color] = [
+        Color(red: 1.00, green: 0.78, blue: 0.84),
+        Color(red: 1.00, green: 0.82, blue: 0.48),
+        Color(red: 0.78, green: 0.90, blue: 1.00),
+        Color(red: 0.82, green: 0.78, blue: 1.00),
+        Color(red: 0.86, green: 1.00, blue: 0.72),
+        Color(red: 1.00, green: 0.70, blue: 0.55),
+        Color(red: 0.92, green: 0.72, blue: 1.00)
+    ]
 
-                ForEach(0..<petalCount, id: \.self) { index in
-                    Capsule()
-                        .fill(kind.tint)
-                        .frame(width: petalWidth, height: petalHeight)
-                        .offset(y: -side * 0.20)
-                        .rotationEffect(.degrees(Double(index) / Double(petalCount) * 360))
-                        .shadow(color: kind.tint.opacity(0.22), radius: 1, y: 0.6)
+    private func stem(side: CGFloat, height: CGFloat = 0.52, y: CGFloat = 0.20) -> some View {
+        Capsule()
+            .fill(stemColor.opacity(0.86))
+            .frame(width: side * 0.07, height: side * height)
+            .offset(y: side * y)
+    }
+
+    private func leaf(side: CGFloat, x: CGFloat, y: CGFloat, angle: Double) -> some View {
+        Capsule()
+            .fill(stemColor.opacity(0.72))
+            .frame(width: side * 0.22, height: side * 0.10)
+            .rotationEffect(.degrees(angle))
+            .offset(x: side * x, y: side * y)
+    }
+
+    private func radialFlower(side: CGFloat, petals: Int, petalScale: CGFloat) -> some View {
+        ZStack {
+            stem(side: side)
+            leaf(side: side, x: -0.10, y: 0.22, angle: -34)
+            leaf(side: side, x: 0.12, y: 0.30, angle: 34)
+
+            ForEach(0..<petals, id: \.self) { index in
+                Ellipse()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.23 * petalScale, height: side * 0.43 * petalScale)
+                    .offset(y: -side * 0.18 * petalScale)
+                    .rotationEffect(.degrees(Double(index) / Double(petals) * 360))
+                    .shadow(color: kind.tint.opacity(0.18), radius: 1, y: 0.5)
+            }
+
+            Circle()
+                .fill(centerColor)
+                .frame(width: side * 0.22, height: side * 0.22)
+                .overlay {
+                    Circle().stroke(.white.opacity(0.42), lineWidth: max(side * 0.022, 1))
                 }
+        }
+    }
 
-                Circle()
-                    .fill(centerColor)
-                    .frame(width: side * 0.24, height: side * 0.24)
+    private func cupFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.48)
+            leaf(side: side, x: -0.12, y: 0.26, angle: -28)
+
+            ForEach(0..<5, id: \.self) { index in
+                RoundedTriangle()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.24, height: side * 0.44)
+                    .rotationEffect(.degrees(-42 + Double(index) * 21))
+                    .offset(x: side * CGFloat(index - 2) * 0.045, y: -side * 0.13)
+            }
+
+            Ellipse()
+                .fill(accentColor.opacity(0.82))
+                .frame(width: side * 0.34, height: side * 0.16)
+                .offset(y: -side * 0.25)
+        }
+    }
+
+    private func bellCluster(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.62, y: 0.10)
+
+            ForEach(0..<5, id: \.self) { index in
+                BellShape()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.22, height: side * 0.24)
+                    .rotationEffect(.degrees(index.isMultiple(of: 2) ? -18 : 18))
+                    .offset(x: side * (index.isMultiple(of: 2) ? -0.12 : 0.12), y: side * (-0.28 + CGFloat(index) * 0.12))
                     .overlay {
-                        Circle()
-                            .stroke(.white.opacity(0.38), lineWidth: max(side * 0.025, 1))
+                        BellShape()
+                            .stroke(.white.opacity(0.42), lineWidth: max(side * 0.012, 0.7))
+                            .frame(width: side * 0.22, height: side * 0.24)
+                            .rotationEffect(.degrees(index.isMultiple(of: 2) ? -18 : 18))
+                            .offset(x: side * (index.isMultiple(of: 2) ? -0.12 : 0.12), y: side * (-0.28 + CGFloat(index) * 0.12))
                     }
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
         }
+    }
+
+    private func spikeFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.70, y: 0.04)
+
+            ForEach(0..<7, id: \.self) { index in
+                Ellipse()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.22, height: side * 0.16)
+                    .rotationEffect(.degrees(index.isMultiple(of: 2) ? -28 : 28))
+                    .offset(x: side * (index.isMultiple(of: 2) ? -0.11 : 0.11), y: side * (-0.32 + CGFloat(index) * 0.10))
+            }
+
+            Circle()
+                .fill(accentColor)
+                .frame(width: side * 0.12, height: side * 0.12)
+                .offset(y: -side * 0.36)
+        }
+    }
+
+    private func clusteredFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side)
+            leaf(side: side, x: 0.14, y: 0.24, angle: 30)
+
+            ForEach(0..<9, id: \.self) { index in
+                let angle = Double(index) / 9 * 360
+                Circle()
+                    .fill((index.isMultiple(of: 2) ? kind.tint : accentColor).gradient)
+                    .frame(width: side * 0.18, height: side * 0.18)
+                    .offset(x: cos(angle * .pi / 180) * side * 0.17, y: sin(angle * .pi / 180) * side * 0.14 - side * 0.14)
+            }
+
+            Circle()
+                .fill(centerColor.opacity(0.82))
+                .frame(width: side * 0.14, height: side * 0.14)
+                .offset(y: -side * 0.14)
+        }
+    }
+
+    private func vineFlower(side: CGFloat) -> some View {
+        ZStack {
+            CurvedStem()
+                .stroke(stemColor, style: StrokeStyle(lineWidth: max(side * 0.045, 1.2), lineCap: .round))
+                .frame(width: side * 0.46, height: side * 0.70)
+                .offset(y: side * 0.05)
+
+            ForEach(0..<5, id: \.self) { index in
+                Ellipse()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.20, height: side * 0.26)
+                    .rotationEffect(.degrees(index.isMultiple(of: 2) ? -26 : 26))
+                    .offset(x: side * (index.isMultiple(of: 2) ? -0.12 : 0.12), y: side * (-0.30 + CGFloat(index) * 0.13))
+            }
+        }
+    }
+
+    private func pansyFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.38, y: 0.30)
+
+            ForEach(0..<5, id: \.self) { index in
+                Circle()
+                    .fill((index < 2 ? accentColor : kind.tint).gradient)
+                    .frame(width: side * (index == 2 ? 0.38 : 0.32), height: side * (index == 2 ? 0.36 : 0.32))
+                    .offset(
+                        x: side * [-0.16, 0.16, 0, -0.12, 0.12][index],
+                        y: side * [-0.18, -0.18, 0.03, 0.12, 0.12][index]
+                    )
+            }
+
+            ForEach(0..<3, id: \.self) { index in
+                Capsule()
+                    .fill(Color(red: 0.30, green: 0.16, blue: 0.12).opacity(0.72))
+                    .frame(width: side * 0.035, height: side * 0.20)
+                    .rotationEffect(.degrees(Double(index - 1) * 24))
+                    .offset(y: side * 0.02)
+            }
+
+            Circle()
+                .fill(.yellow)
+                .frame(width: side * 0.11, height: side * 0.11)
+        }
+    }
+
+    private func sweetPeaFlower(side: CGFloat) -> some View {
+        ZStack {
+            CurvedStem()
+                .stroke(stemColor, style: StrokeStyle(lineWidth: max(side * 0.04, 1), lineCap: .round))
+                .frame(width: side * 0.40, height: side * 0.58)
+                .offset(y: side * 0.12)
+
+            Ellipse()
+                .fill(accentColor.gradient)
+                .frame(width: side * 0.42, height: side * 0.30)
+                .rotationEffect(.degrees(-18))
+                .offset(x: -side * 0.11, y: -side * 0.12)
+
+            Ellipse()
+                .fill(kind.tint.gradient)
+                .frame(width: side * 0.42, height: side * 0.30)
+                .rotationEffect(.degrees(18))
+                .offset(x: side * 0.11, y: -side * 0.12)
+
+            Ellipse()
+                .fill(kind.tint.opacity(0.82))
+                .frame(width: side * 0.32, height: side * 0.24)
+                .offset(y: side * 0.08)
+        }
+    }
+
+    private func trumpetFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.44, y: 0.26)
+            BellShape()
+                .fill(kind.tint.gradient)
+                .frame(width: side * 0.54, height: side * 0.56)
+                .rotationEffect(.degrees(180))
+                .offset(y: -side * 0.08)
+            Ellipse()
+                .stroke(accentColor, lineWidth: max(side * 0.04, 1))
+                .frame(width: side * 0.45, height: side * 0.18)
+                .offset(y: -side * 0.34)
+        }
+    }
+
+    private func orchidFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side)
+
+            ForEach(0..<3, id: \.self) { index in
+                Ellipse()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.26, height: side * 0.44)
+                    .rotationEffect(.degrees(Double(index) * 120))
+                    .offset(y: -side * 0.12)
+            }
+
+            Ellipse()
+                .fill(accentColor.gradient)
+                .frame(width: side * 0.34, height: side * 0.24)
+                .offset(y: side * 0.06)
+
+            Circle()
+                .fill(centerColor)
+                .frame(width: side * 0.13, height: side * 0.13)
+        }
+    }
+
+    private func tropicalFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.44, y: 0.26)
+            ForEach(0..<5, id: \.self) { index in
+                PointedPetal()
+                    .fill((index.isMultiple(of: 2) ? kind.tint : accentColor).gradient)
+                    .frame(width: side * 0.22, height: side * 0.56)
+                    .offset(y: -side * 0.20)
+                    .rotationEffect(.degrees(-54 + Double(index) * 27))
+            }
+            Capsule()
+                .fill(.orange)
+                .frame(width: side * 0.08, height: side * 0.42)
+                .rotationEffect(.degrees(55))
+                .offset(x: side * 0.12, y: -side * 0.18)
+        }
+    }
+
+    private func lotusFlower(side: CGFloat) -> some View {
+        ZStack {
+            Capsule()
+                .fill(stemColor.opacity(0.45))
+                .frame(width: side * 0.50, height: side * 0.08)
+                .offset(y: side * 0.28)
+
+            ForEach(0..<9, id: \.self) { index in
+                PointedPetal()
+                    .fill((index.isMultiple(of: 2) ? kind.tint : accentColor).gradient)
+                    .frame(width: side * 0.22, height: side * 0.48)
+                    .offset(y: -side * 0.14)
+                    .rotationEffect(.degrees(-62 + Double(index) * 15.5))
+            }
+        }
+    }
+
+    private func sphereFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side, height: 0.48, y: 0.26)
+            ForEach(0..<18, id: \.self) { index in
+                let angle = Double(index) / 18 * 360
+                Circle()
+                    .fill((index.isMultiple(of: 2) ? kind.tint : accentColor).gradient)
+                    .frame(width: side * 0.10, height: side * 0.10)
+                    .offset(x: cos(angle * .pi / 180) * side * 0.22, y: sin(angle * .pi / 180) * side * 0.22 - side * 0.15)
+            }
+            Circle()
+                .fill(kind.tint.opacity(0.25))
+                .frame(width: side * 0.42, height: side * 0.42)
+                .offset(y: -side * 0.15)
+        }
+    }
+
+    private func heartFlower(side: CGFloat) -> some View {
+        ZStack {
+            CurvedStem()
+                .stroke(stemColor, style: StrokeStyle(lineWidth: max(side * 0.035, 1), lineCap: .round))
+                .frame(width: side * 0.32, height: side * 0.55)
+                .offset(y: side * 0.12)
+
+            ForEach(0..<3, id: \.self) { index in
+                HeartShape()
+                    .fill((index.isMultiple(of: 2) ? kind.tint : accentColor).gradient)
+                    .frame(width: side * 0.24, height: side * 0.24)
+                    .offset(x: side * (index.isMultiple(of: 2) ? -0.12 : 0.12), y: side * (-0.24 + CGFloat(index) * 0.15))
+            }
+        }
+    }
+
+    private func starFlower(side: CGFloat) -> some View {
+        ZStack {
+            stem(side: side)
+            ForEach(0..<6, id: \.self) { index in
+                PointedPetal()
+                    .fill(kind.tint.gradient)
+                    .frame(width: side * 0.16, height: side * 0.42)
+                    .offset(y: -side * 0.16)
+                    .rotationEffect(.degrees(Double(index) * 60))
+            }
+            Circle()
+                .fill(centerColor)
+                .frame(width: side * 0.14, height: side * 0.14)
+        }
+    }
+}
+
+private enum FlowerVisualStyle {
+    case radial
+    case ruffled
+    case cup
+    case bell
+    case spike
+    case cluster
+    case vine
+    case pansy
+    case pea
+    case trumpet
+    case orchid
+    case tropical
+    case lotus
+    case sphere
+    case heart
+    case star
+}
+
+private struct RoundedTriangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.midY))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY), control: CGPoint(x: rect.midX, y: rect.maxY * 1.10))
+        path.addQuadCurve(to: CGPoint(x: rect.midX, y: rect.minY), control: CGPoint(x: rect.minX, y: rect.midY))
+        return path
+    }
+}
+
+private struct BellShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addCurve(
+            to: CGPoint(x: rect.maxX, y: rect.maxY * 0.82),
+            control1: CGPoint(x: rect.maxX * 0.82, y: rect.minY + rect.height * 0.12),
+            control2: CGPoint(x: rect.maxX * 0.92, y: rect.midY)
+        )
+        path.addQuadCurve(to: CGPoint(x: rect.midX, y: rect.maxY), control: CGPoint(x: rect.maxX * 0.76, y: rect.maxY * 0.92))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY * 0.82), control: CGPoint(x: rect.maxX * 0.24, y: rect.maxY * 0.92))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control1: CGPoint(x: rect.maxX * 0.08, y: rect.midY),
+            control2: CGPoint(x: rect.maxX * 0.18, y: rect.minY + rect.height * 0.12)
+        )
+        return path
+    }
+}
+
+private struct PointedPetal: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.maxY),
+            control1: CGPoint(x: rect.maxX, y: rect.height * 0.20),
+            control2: CGPoint(x: rect.maxX * 0.82, y: rect.height * 0.76)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control1: CGPoint(x: rect.maxX * 0.18, y: rect.height * 0.76),
+            control2: CGPoint(x: rect.minX, y: rect.height * 0.20)
+        )
+        return path
+    }
+}
+
+private struct CurvedStem: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.minY),
+            control1: CGPoint(x: rect.minX, y: rect.maxY * 0.68),
+            control2: CGPoint(x: rect.maxX, y: rect.maxY * 0.35)
+        )
+        return path
+    }
+}
+
+private struct HeartShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
+        path.addCurve(
+            to: CGPoint(x: rect.minX, y: rect.height * 0.32),
+            control1: CGPoint(x: rect.minX, y: rect.height * 0.74),
+            control2: CGPoint(x: rect.minX, y: rect.height * 0.44)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.height * 0.22),
+            control1: CGPoint(x: rect.minX, y: rect.minY),
+            control2: CGPoint(x: rect.midX, y: rect.minY)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.maxX, y: rect.height * 0.32),
+            control1: CGPoint(x: rect.midX, y: rect.minY),
+            control2: CGPoint(x: rect.maxX, y: rect.minY)
+        )
+        path.addCurve(
+            to: CGPoint(x: rect.midX, y: rect.maxY),
+            control1: CGPoint(x: rect.maxX, y: rect.height * 0.44),
+            control2: CGPoint(x: rect.maxX, y: rect.height * 0.74)
+        )
+        return path
     }
 }
 
@@ -1374,6 +1821,43 @@ private extension FocusPhase {
 private extension FlowerKind {
     var stableIndex: Int {
         Self.allCases.firstIndex(of: self) ?? 0
+    }
+
+    var visualStyle: FlowerVisualStyle {
+        switch self {
+        case .sweetPea:
+            .pea
+        case .pansy:
+            .pansy
+        case .bluebell, .lilyOfTheValley, .fuchsia, .snowdrop:
+            .bell
+        case .foxglove, .snapdragon, .freesia, .hollyhock, .delphinium, .lupine, .salvia, .gladiolus, .stock, .tuberose:
+            .spike
+        case .hydrangea, .yarrow, .babyBreath, .phlox, .verbena, .lantana, .clover, .queenAnnesLace, .milkweed, .hoya, .stephanotis:
+            .cluster
+        case .wisteria, .bougainvillea, .morningGlory, .clematis, .honeysuckle, .passionflower:
+            .vine
+        case .daffodil, .hibiscus, .callaLily, .petunia, .nicotiana:
+            .trumpet
+        case .orchid, .iris:
+            .orchid
+        case .birdOfParadise, .protea, .banksia, .waratah, .canna:
+            .tropical
+        case .lotus, .crocus:
+            .lotus
+        case .allium, .chrysanthemum, .gerbera, .scabiosa, .tansy:
+            .sphere
+        case .bleedingHeart:
+            .heart
+        case .jasmine, .magnolia, .plumeria, .borage:
+            .star
+        case .rose, .peony, .camellia, .gardenia, .ranunculus, .carnation, .dahlia, .begonia, .azalea, .rhododendron, .hellebore:
+            .ruffled
+        case .tulip, .lily, .amaryllis, .cyclamen:
+            .cup
+        default:
+            .radial
+        }
     }
 
     var tint: Color {
