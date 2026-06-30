@@ -246,6 +246,7 @@ public struct FlowerDoroDashboardView: View {
     @State private var selectedMainTab: DashboardMainTab = .session
     @State private var selectedDashboardTab: DashboardTab = .garden
     @State private var flowerBookSpreadIndex = 0
+    @State private var isInstallingUpdate = false
     @AppStorage("FlowerDoro.autoCheckUpdates") private var autoCheckUpdates = true
     @AppStorage("FlowerDoro.language") private var languageCode = AppLanguage.vietnamese.rawValue
     @Environment(\.openURL) private var openURL
@@ -479,13 +480,27 @@ public struct FlowerDoroDashboardView: View {
             HStack(spacing: 8) {
                 Button {
                     Task {
-                        await updateChecker.checkForUpdates()
+                        await checkForUpdatesAndPromptInstall()
                     }
                 } label: {
                     Label(copy.checkUpdates, systemImage: "arrow.triangle.2.circlepath")
                         .lineLimit(1)
                 }
-                .disabled(updateChecker.status == .checking)
+                .disabled(updateChecker.status == .checking || isInstallingUpdate)
+
+                #if os(macOS)
+                if case .available(let release) = updateChecker.status, release.assetURL != nil {
+                    Button {
+                        Task {
+                            await promptInstall(release)
+                        }
+                    } label: {
+                        Label(copy.installUpdate, systemImage: "square.and.arrow.down")
+                            .lineLimit(1)
+                    }
+                    .disabled(isInstallingUpdate)
+                }
+                #endif
 
                 if let releaseURL = latestReleaseURL {
                     Button {
@@ -513,32 +528,42 @@ public struct FlowerDoroDashboardView: View {
 
     @ViewBuilder
     private var updateStatusView: some View {
-        switch updateChecker.status {
-        case .idle:
-            Text(copy.updatesUseGitHub)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        case .checking:
+        if isInstallingUpdate {
             HStack(spacing: 8) {
                 ProgressView()
                     .controlSize(.small)
-                Text(copy.checkingReleases)
+                Text(copy.installingUpdate)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        case .available(let release):
-            Text(copy.latestRelease(release.name))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.green)
-                .lineLimit(1)
-        case .unavailable:
-            Text(copy.upToDate)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        case .failed(let message):
-            Text(copy.releaseFailureMessage(message))
-                .font(.caption)
-                .foregroundStyle(.red)
+        } else {
+            switch updateChecker.status {
+            case .idle:
+                Text(copy.updatesUseGitHub)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case .checking:
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(copy.checkingReleases)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            case .available(let release):
+                Text(copy.latestRelease(release.name))
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.green)
+                    .lineLimit(1)
+            case .unavailable:
+                Text(copy.upToDate)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case .failed(let message):
+                Text(copy.releaseFailureMessage(message))
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
         }
     }
 
@@ -557,6 +582,69 @@ public struct FlowerDoroDashboardView: View {
     private var copy: AppCopy {
         AppCopy(language: language)
     }
+
+    @MainActor
+    private func checkForUpdatesAndPromptInstall() async {
+        await updateChecker.checkForUpdates()
+        guard case .available(let release) = updateChecker.status else { return }
+        await promptInstall(release)
+    }
+
+    @MainActor
+    private func promptInstall(_ release: ReleaseUpdate) async {
+        #if os(macOS)
+        guard confirmInstall(release) else { return }
+        await install(release)
+        #else
+        openURL(release.htmlURL)
+        #endif
+    }
+
+    #if os(macOS)
+    @MainActor
+    private func confirmInstall(_ release: ReleaseUpdate) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = copy.installUpdateTitle(release.name)
+        alert.informativeText = copy.installUpdateMessage(release.name)
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: copy.installAndRestart)
+        alert.addButton(withTitle: copy.cancel)
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    @MainActor
+    private func install(_ release: ReleaseUpdate) async {
+        guard release.assetURL != nil else {
+            showUpdateAlert(message: copy.updateAssetMissing)
+            return
+        }
+
+        isInstallingUpdate = true
+        do {
+            let result = try await ReleaseUpdateInstaller().install(release)
+            isInstallingUpdate = false
+            if case .manualInstall = result {
+                showUpdateAlert(message: copy.updateInstallFallback)
+            }
+        } catch ReleaseUpdateInstallError.missingAsset {
+            isInstallingUpdate = false
+            showUpdateAlert(message: copy.updateAssetMissing)
+        } catch {
+            isInstallingUpdate = false
+            showUpdateAlert(message: copy.updateInstallFailed)
+        }
+    }
+
+    @MainActor
+    private func showUpdateAlert(message: String) {
+        let alert = NSAlert()
+        alert.messageText = "FlowerDoro"
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+    #endif
 
     private var languageBinding: Binding<String> {
         Binding {

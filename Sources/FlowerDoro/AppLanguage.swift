@@ -50,10 +50,14 @@ public struct AppCopy {
     public var languageLabel: String { language == .vietnamese ? "Ngôn ngữ" : "Language" }
     public var autoCheckUpdates: String { language == .vietnamese ? "Tự kiểm tra cập nhật" : "Auto check updates" }
     public var checkUpdates: String { language == .vietnamese ? "Kiểm tra" : "Check Updates" }
+    public var installUpdate: String { language == .vietnamese ? "Cài đặt" : "Install" }
+    public var installAndRestart: String { language == .vietnamese ? "Cài đặt và mở lại" : "Install and Restart" }
+    public var cancel: String { language == .vietnamese ? "Hủy" : "Cancel" }
     public var openRelease: String { language == .vietnamese ? "Mở bản phát hành" : "Open Release" }
     public var quit: String { language == .vietnamese ? "Thoát" : "Quit" }
     public var updatesUseGitHub: String { language == .vietnamese ? "Cập nhật dùng GitHub Releases." : "Updates use GitHub releases." }
     public var checkingReleases: String { language == .vietnamese ? "Đang kiểm tra GitHub Releases..." : "Checking GitHub releases..." }
+    public var installingUpdate: String { language == .vietnamese ? "Đang tải và cài đặt bản cập nhật..." : "Downloading and installing update..." }
     public var upToDate: String { language == .vietnamese ? "Bạn đang dùng bản mới nhất." : "You are up to date." }
     public var finishFirstFlower: String { language == .vietnamese ? "Hoàn thành một phiên tập trung để trồng bông hoa đầu tiên." : "Finish a focus session to grow your first flower." }
     public var flowers: String { language == .vietnamese ? "hoa" : "flowers" }
@@ -71,9 +75,23 @@ public struct AppCopy {
     public var releaseUnreachable: String { language == .vietnamese ? "Không thể kết nối GitHub Releases." : "Could not reach GitHub releases." }
     public var releaseInvalidLink: String { language == .vietnamese ? "Liên kết bản phát hành không hợp lệ." : "Latest release link was invalid." }
     public var releaseCheckFailed: String { language == .vietnamese ? "Kiểm tra cập nhật thất bại." : "Update check failed." }
+    public var updateAssetMissing: String { language == .vietnamese ? "Không tìm thấy file tải FlowerDoro trong bản phát hành." : "Could not find the FlowerDoro download in this release." }
+    public var updateInstallFailed: String { language == .vietnamese ? "Không thể cài đặt bản cập nhật." : "Could not install the update." }
+    public var updateInstallFallback: String { language == .vietnamese ? "Đã tải bản cập nhật. Finder sẽ mở để bạn kéo FlowerDoro vào Applications." : "The update was downloaded. Finder will open so you can drag FlowerDoro to Applications." }
 
     public func latestRelease(_ name: String) -> String {
         language == .vietnamese ? "Mới nhất: \(name)" : "Latest: \(name)"
+    }
+
+    public func installUpdateTitle(_ name: String) -> String {
+        language == .vietnamese ? "Cài đặt \(name)?" : "Install \(name)?"
+    }
+
+    public func installUpdateMessage(_ name: String) -> String {
+        if language == .vietnamese {
+            return "FlowerDoro sẽ tải \(name), thay app hiện tại, rồi mở lại."
+        }
+        return "FlowerDoro will download \(name), replace the current app, then reopen."
     }
 
     public func releaseFailureMessage(_ message: String) -> String {
