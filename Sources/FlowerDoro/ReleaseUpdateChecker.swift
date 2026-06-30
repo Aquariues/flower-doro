@@ -4,6 +4,7 @@ public struct ReleaseUpdate: Equatable {
     public let tagName: String
     public let name: String
     public let htmlURL: URL
+    public let assetURL: URL?
     public let publishedAt: Date?
 }
 
@@ -56,11 +57,16 @@ public final class ReleaseUpdateChecker: ObservableObject {
                 return
             }
 
+            let assetURL = release.assets
+                .first { $0.name.hasSuffix(".zip") && $0.name.localizedCaseInsensitiveContains("FlowerDoro") }
+                .flatMap { URL(string: $0.browserDownloadURL) }
+
             status = .available(
                 ReleaseUpdate(
                     tagName: release.tagName,
                     name: release.name ?? release.tagName,
                     htmlURL: htmlURL,
+                    assetURL: assetURL,
                     publishedAt: release.publishedAt
                 )
             )
@@ -74,12 +80,24 @@ private struct GitHubRelease: Decodable {
     let tagName: String
     let name: String?
     let htmlURL: String
+    let assets: [GitHubReleaseAsset]
     let publishedAt: Date?
 
     enum CodingKeys: String, CodingKey {
         case tagName = "tag_name"
         case name
         case htmlURL = "html_url"
+        case assets
         case publishedAt = "published_at"
+    }
+}
+
+private struct GitHubReleaseAsset: Decodable {
+    let name: String
+    let browserDownloadURL: String
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case browserDownloadURL = "browser_download_url"
     }
 }
