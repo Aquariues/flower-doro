@@ -14,7 +14,7 @@ struct FlowerDoroApp: App {
     var body: some Scene {
         WindowGroup {
             FlowerDoroRootView(timer: timer)
-                .frame(minWidth: 94, idealWidth: 128, maxWidth: 190)
+                .frame(minWidth: 70, idealWidth: 96, maxWidth: 143)
                 .frame(minHeight: 31, idealHeight: 42, maxHeight: 65)
         }
         .windowResizability(.contentSize)

@@ -25,8 +25,8 @@ public struct FlowerDoroRootView: View {
         Group {
             if timer.isRunning {
                 compactTimer
-                    .padding(4)
-                    .frame(minWidth: 94, idealWidth: 116, maxWidth: 190)
+                    .padding(3)
+                    .frame(minWidth: 70, idealWidth: 87, maxWidth: 143)
                     .frame(minHeight: 31, idealHeight: 38, maxHeight: 65)
                     .background {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -62,14 +62,20 @@ public struct FlowerDoroRootView: View {
     }
 
     private var moveHandle: some View {
-        Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-            .font(.system(size: 8, weight: .bold))
-            .foregroundStyle(timer.phase.tint.opacity(0.85))
-            .frame(width: 14, height: 14)
-            .background(timer.phase.tint.opacity(0.10), in: Circle())
-            .padding(3)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
+        ZStack {
+            #if os(macOS)
+            WindowDragHandle()
+            #endif
+
+            Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundStyle(timer.phase.tint.opacity(0.85))
+                .frame(width: 14, height: 14)
+                .background(timer.phase.tint.opacity(0.10), in: Circle())
+                .accessibilityHidden(true)
+        }
+        .frame(width: 20, height: 20)
+        .padding(2)
     }
 
     @ViewBuilder
@@ -1803,6 +1809,24 @@ private struct WindowTransparencyConfigurator: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private struct WindowDragHandle: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        DraggableHandleView()
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private final class DraggableHandleView: NSView {
+    override func mouseDown(with event: NSEvent) {
+        window?.performDrag(with: event)
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .openHand)
+    }
 }
 #else
 private struct WindowTransparencyConfigurator: View {
