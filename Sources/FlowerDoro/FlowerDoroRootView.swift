@@ -36,6 +36,9 @@ public struct FlowerDoroRootView: View {
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .strokeBorder(timer.phase.tint.opacity(0.95), lineWidth: 1.5)
                     }
+                    .overlay(alignment: .topTrailing) {
+                        moveHandle
+                    }
                     .padding(5)
             } else {
                 Color.clear
@@ -56,6 +59,17 @@ public struct FlowerDoroRootView: View {
             clockFace
         }
         .contentShape(Rectangle())
+    }
+
+    private var moveHandle: some View {
+        Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundStyle(timer.phase.tint.opacity(0.85))
+            .frame(width: 14, height: 14)
+            .background(timer.phase.tint.opacity(0.10), in: Circle())
+            .padding(3)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder
