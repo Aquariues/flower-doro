@@ -25,18 +25,18 @@ public struct FlowerDoroRootView: View {
         Group {
             if timer.isRunning {
                 compactTimer
-                    .padding(8)
-                    .frame(minWidth: 188, idealWidth: 232, maxWidth: 380)
-                    .frame(minHeight: 62, idealHeight: 74, maxHeight: 130)
+                    .padding(4)
+                    .frame(minWidth: 94, idealWidth: 116, maxWidth: 190)
+                    .frame(minHeight: 31, idealHeight: 38, maxHeight: 65)
                     .background {
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .fill(.clear)
                     }
                     .overlay {
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .strokeBorder(timer.phase.tint.opacity(0.95), lineWidth: 2)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .strokeBorder(timer.phase.tint.opacity(0.95), lineWidth: 1.5)
                     }
-                    .padding(10)
+                    .padding(5)
             } else {
                 Color.clear
                     .frame(width: 1, height: 1)
@@ -52,7 +52,7 @@ public struct FlowerDoroRootView: View {
     }
 
     private var runningTimer: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: 4) {
             clockFace
         }
         .contentShape(Rectangle())
@@ -72,25 +72,25 @@ public struct FlowerDoroRootView: View {
 
     private var outlineClock: some View {
         Text(timer.remainingTimeText)
-            .font(.system(size: 35, weight: .bold, design: .rounded))
+            .font(.system(size: 22, weight: .bold, design: .rounded))
             .foregroundStyle(timer.phase.tint)
             .monospacedDigit()
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(0.75)
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
     }
 
     private var petalClock: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: 4) {
             PetalProgressMark(progress: timer.phase == .work ? timer.progress : 1 - timer.progress, tint: timer.phase.tint)
-                .frame(width: 26, height: 26)
+                .frame(width: 16, height: 16)
 
             outlineClock
         }
     }
 
     private var gardenBedClock: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 5) {
             outlineClock
 
             if timer.phase == .work {
@@ -100,7 +100,7 @@ public struct FlowerDoroRootView: View {
                     progress: timer.focusGrowthProgress,
                     tint: timer.phase.tint
                 )
-                .frame(width: 36, height: 34)
+                .frame(width: 22, height: 21)
                 .accessibilityLabel(copy.flowerGrowingAccessibility)
             }
         }
