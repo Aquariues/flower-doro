@@ -2,6 +2,8 @@ import Foundation
 
 @MainActor
 public final class FocusTimerStore: ObservableObject {
+    public static let minimumFlowerRewardMinutes = 30
+
     @Published public var workMinutes: Int {
         didSet { applySettingsChangeIfIdle() }
     }
@@ -72,6 +74,10 @@ public final class FocusTimerStore: ObservableObject {
 
     public var isRunningBreak: Bool {
         isRunning && phase == .break
+    }
+
+    public var isWorkSessionRewardEligible: Bool {
+        workMinutes >= Self.minimumFlowerRewardMinutes
     }
 
     public var remainingTimeText: String {
@@ -150,7 +156,9 @@ public final class FocusTimerStore: ObservableObject {
     private func completeCurrentPhase() {
         switch phase {
         case .work:
-            addFlower(kind: activeFlowerKind ?? .random())
+            if isWorkSessionRewardEligible {
+                addFlower(kind: activeFlowerKind ?? .random())
+            }
             activeFlowerKind = nil
             phase = .break
             totalSeconds = breakMinutes * 60
@@ -170,7 +178,7 @@ public final class FocusTimerStore: ObservableObject {
     }
 
     private func prepareActiveFlowerIfNeeded() {
-        guard phase == .work, activeFlowerKind == nil else { return }
+        guard phase == .work, isWorkSessionRewardEligible, activeFlowerKind == nil else { return }
         activeFlowerKind = FlowerKind.random()
     }
 
