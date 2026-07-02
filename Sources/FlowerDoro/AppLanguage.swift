@@ -83,6 +83,13 @@ public struct AppCopy {
         language == .vietnamese ? "Mới nhất: \(name)" : "Latest: \(name)"
     }
 
+    public func flowerRewardMinimumNote(_ minutes: Int) -> String {
+        if language == .vietnamese {
+            return "Hoàn thành ít nhất \(minutes) phút tập trung để nhận hoa."
+        }
+        return "Complete at least \(minutes) focus minutes to receive a flower."
+    }
+
     public func installUpdateTitle(_ name: String) -> String {
         language == .vietnamese ? "Cài đặt \(name)?" : "Install \(name)?"
     }
