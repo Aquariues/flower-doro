@@ -193,6 +193,11 @@ public struct FlowerDoroRootView: View {
                 Spacer()
                 MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
             }
+
+            Text(copy.flowerRewardMinimumNote(FocusTimerStore.minimumFlowerRewardMinutes))
+                .font(.caption)
+                .foregroundStyle(timer.isWorkSessionRewardEligible ? Color.secondary : Color.orange)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .disabled(timer.isRunning)
         .padding()
@@ -364,6 +369,11 @@ public struct FlowerDoroDashboardView: View {
                     Spacer()
                     MinuteField(value: $timer.breakMinutes, range: 1...60, copy: copy)
                 }
+
+                Text(copy.flowerRewardMinimumNote(FocusTimerStore.minimumFlowerRewardMinutes))
+                    .font(.caption)
+                    .foregroundStyle(timer.isWorkSessionRewardEligible ? Color.secondary : Color.orange)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .disabled(timer.isRunning)
         }
